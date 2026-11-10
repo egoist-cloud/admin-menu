@@ -224,7 +224,7 @@ https://api.telegram.org/bot<ТОКЕН>/getWebhookInfo
 | `ADMIN_PASSWORD_HASH` | bcrypt-хеш из `npm run hash -- "пароль"` |
 | `TELEGRAM_BOT_TOKEN` | токен из BotFather |
 | `TELEGRAM_CHAT_ID` | ваш chat_id или id канала |
-`SESSION_SECRET` Render сгенерирует сам (`generateValue: true`). `WEBHOOK_URL` и `TELEGRAM_WEBHOOK_SECRET` заполнять не нужно: первый берётся из `RENDER_EXTERNAL_URL`, второй генерируется при старте и сразу уходит в `setWebhook`. `NODE_ENV=production`, `TZ=Europe/Moscow` и `NODE_VERSION` уже прописаны в `render.yaml`.
+`SESSION_SECRET` Render сгенерирует сам (`generateValue: true`), но только если сервис создан через Blueprint. Если сервис создавался вручную (New → Web Service), `render.yaml` не применяется — добавьте `SESSION_SECRET` в Environment вручную: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. После добавления не меняйте значение, иначе сессии админки сбросятся. `WEBHOOK_URL` и `TELEGRAM_WEBHOOK_SECRET` заполнять не нужно: первый берётся из `RENDER_EXTERNAL_URL`, второй генерируется при старте и сразу уходит в `setWebhook`. `NODE_ENV=production`, `TZ=Europe/Moscow` и `NODE_VERSION` уже прописаны в `render.yaml`.
 
 5. Нажмите **Apply** / **Create**. Первый билд: `npm ci && npm run build`, старт: `npm start` (миграции → сервер).
 6. Дождитесь статуса **Live** и откройте публичный URL.
@@ -348,6 +348,7 @@ npm run db:status
 | `P1012: Environment variable not found: DATABASE_URL` | сборка проходит, но старт падает: в Render нет `DATABASE_URL`. Dashboard → сервис → **Environment** → **Add Environment Variable** → Key `DATABASE_URL`, Value — Service URI Aiven или строка Neon → **Save** (сервис перезапустится). Если старт остался старым: **Manual Deploy → Deploy latest commit** |
 | `P1001: Can't reach database server` | строка скопирована целиком, `sslmode=require` есть, сервис Aiven включён (Running); у Neon проект не на паузе |
 | Aiven: сервис в статусе **Powered off** | free-план Aiven выключается после простоя: Console → сервис → **Power on**, подождите 1–2 минуты |
+| `SESSION_SECRET не задан` | Render → Environment → **Add Environment Variable** → `SESSION_SECRET` = 64-символьная случайная строка (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`) → **Save**. Если сервис создан не через Blueprint, `generateValue` из `render.yaml` не применяется. После добавления не меняйте значение — иначе сессии админки сбросятся |
 | `unable to verify the first certificate` / `self-signed certificate` | в `DATABASE_URL` нет `?sslmode=require`; добавьте параметр. Для managed-баз пул сессий сам отключает проверку цепочки в режиме `require` |
 | `The table ... does not exist` | не прошли миграции: `npm run db:deploy` локально или **Manual Deploy** на Render, смотрите лог билда |
 | Логин не принимается | хеш сгенерирован тем же bcrypt и вставлен целиком (`$2b$12$...`), логин совпадает с `ADMIN_USERNAME`; при `NODE_ENV=production` cookie `secure`, вход только по https |

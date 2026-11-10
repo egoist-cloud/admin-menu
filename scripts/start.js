@@ -46,7 +46,10 @@ if (!isLocalDatabase && !/[?&]sslmode=/i.test(databaseUrl)) {
 if (!sessionSecret) {
   fail('SESSION_SECRET не задан — без него не работают сессии админки.', [
     'Сгенерируйте строку: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
-    'Render: Environment → SESSION_SECRET (или оставьте generateValue из render.yaml).',
+    'Render: Dashboard → сервис → Environment → Add Environment Variable',
+    '  Key:   SESSION_SECRET',
+    '  Value: строка из команды выше (64 символа)',
+    'generateValue из render.yaml работает только у сервиса, созданного через Blueprint.',
   ]);
 }
 
