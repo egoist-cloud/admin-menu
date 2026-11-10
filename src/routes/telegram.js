@@ -7,7 +7,7 @@ const { getWebhookHandler } = require('../lib/telegram');
 const router = express.Router();
 
 router.post('/api/telegram/webhook', (req, res, next) => {
-  if (!config.telegram.token || !config.telegram.webhookSecret) {
+  if (!config.telegram.token) {
     return res.status(503).json({ ok: false, error: 'telegram bot is not configured' });
   }
 

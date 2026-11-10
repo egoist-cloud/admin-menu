@@ -1,14 +1,25 @@
 'use strict';
 
+const crypto = require('node:crypto');
 const { Bot, webhookCallback } = require('grammy');
 const config = require('../config');
 const { formatDateTime, escapeHtml } = require('./format');
 
 let bot = null;
 let webhookHandler = null;
+let activeWebhookSecret = '';
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Telegram допускает в secret_token только A-Z, a-z, 0-9, _ и -.
+// Если секрет не задан (или задан неверно), генерируем свой: он уходит в setWebhook
+// и проверяется на каждом входящем апдейте, поэтому защита не слабеет.
+function resolveWebhookSecret() {
+  const configured = config.telegram.webhookSecret;
+  if (configured && /^[A-Za-z0-9_-]{1,256}$/.test(configured)) return configured;
+  return crypto.randomBytes(24).toString('hex');
 }
 
 function initTelegram() {
@@ -38,9 +49,8 @@ function initTelegram() {
     console.error('[telegram] ошибка обработки апдейта:', error);
   });
 
-  if (config.telegram.webhookSecret) {
-    webhookHandler = webhookCallback(bot, 'express', { secretToken: config.telegram.webhookSecret });
-  }
+  activeWebhookSecret = resolveWebhookSecret();
+  webhookHandler = webhookCallback(bot, 'express', { secretToken: activeWebhookSecret });
 
   return bot;
 }
@@ -52,8 +62,8 @@ async function setupTelegramWebhook() {
     console.warn('[telegram] WEBHOOK_URL не задан — webhook не установлен.');
     return false;
   }
-  if (!config.telegram.webhookSecret) {
-    console.warn('[telegram] TELEGRAM_WEBHOOK_SECRET не задан — webhook не будет установлен без секрета.');
+  if (!activeWebhookSecret) {
+    console.warn('[telegram] webhook не установлен: бот не инициализирован.');
     return false;
   }
 
@@ -69,7 +79,7 @@ async function setupTelegramWebhook() {
   for (let attempt = 1; attempt <= 5; attempt += 1) {
     try {
       await bot.api.setWebhook(url, {
-        secret_token: config.telegram.webhookSecret,
+        secret_token: activeWebhookSecret,
         drop_pending_updates: true,
         allowed_updates: ['message'],
       });

@@ -37,7 +37,8 @@ admin-menu/
 │   ├── schema.prisma                  # модели Test, Question, AnswerOption, Submission, SubmissionAnswer
 │   └── migrations/20260101000000_init/ # готовые SQL-миграции (+ таблица сессий)
 ├── public/                            # styles.css, admin.js, test.js, ui.js, favicon.svg
-├── scripts/hash-password.js           # генератор ADMIN_PASSWORD_HASH
+├── scripts/hash-password.js            # генератор ADMIN_PASSWORD_HASH
+├── scripts/start.js                    # проверка env → миграции → сервер
 ├── src/
 │   ├── config.js                      # чтение и проверка env
 │   ├── prisma.js                      # Prisma Client
@@ -55,19 +56,15 @@ admin-menu/
 
 ---
 
-## Шаг 0. Репозиторий через GitHub Desktop
+## Шаг 0. Репозиторий
 
-Проект уже лежит в папке `admin-menu`. Дальше — только GitHub Desktop.
+Проект уже создан и запушен на GitHub. Дальнейшие изменения:
 
-1. Откройте GitHub Desktop → **File → Add local repository…**
-2. Выберите папку `admin-menu` (внутри неё есть `package.json` и этот README).
-3. Репозиторий уже инициализирован, первый коммит сделан — Desktop сразу покажет историю. Если появятся новые изменения, введите Summary и нажмите **Commit to main**.
-4. Нажмите **Publish repository**:
-   - **Name:** `admin-menu` (GitHub не поддерживает пробелы в имени; отображаемое имя можно оставить «admin menu»);
-   - **Description:** `Онлайн-тесты: сайт, админ-панель и Telegram-бот на Express + Prisma + Neon`;
-   - снимите галочку **Keep this code private**, если репозиторий должен быть публичным (Render умеет и приватные, но публичный проще).
+1. Откройте GitHub Desktop → **File → Add local repository…** → папка `admin-menu` (если ещё не добавлена).
+2. Введите Summary → **Commit to main**.
+3. **Push origin** — Render подхватит коммит автоматически (`autoDeploy: true`).
 
-> Репозиторий уже содержит `.gitignore`: `node_modules`, `.env`, логи и сборка не попадут в коммит. Секретов в коде нет.
+> `.gitignore` исключает `node_modules`, `.env`, логи и сборку. Секретов в репозитории нет.
 
 ---
 
@@ -128,7 +125,7 @@ npm run dev
 | Команда | Что делает |
 | --- | --- |
 | `npm run dev` | миграции + сервер с watch |
-| `npm start` | миграции + сервер (так запускает Render) |
+| `npm start` | проверка env → миграции → сервер (так запускает Render) |
 | `npm run build` | `prisma generate` |
 | `npm run db:deploy` | применить миграции вручную |
 | `npm run db:status` | статус миграций |
@@ -158,6 +155,8 @@ postgresql://neondb_owner:ПАРОЛЬ@ep-cool-name-123456.eu-central-1.aws.neon
 
 Схема создаётся автоматически при первом запуске (`prisma migrate deploy`). Никаких ручных SQL выполнять не нужно.
 
+**Если выбрали Supabase:** Project → Settings → Database → Connection string → URI. Берите прямой порт `5432` и добавьте `?sslmode=require`; пулер `6543` для миграций не подходит. Строка выглядит так: `postgresql://postgres:ПАРОЛЬ@db.xxx.supabase.co:5432/postgres?sslmode=require`.
+
 ---
 
 ## Шаг 3. Telegram-бот
@@ -179,7 +178,7 @@ postgresql://neondb_owner:ПАРОЛЬ@ep-cool-name-123456.eu-central-1.aws.neon
 node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"
 ```
 
-6. `WEBHOOK_URL` — публичный адрес сервиса **без слэша на конце**, например `https://admin-menu.onrender.com`. При старте приложение само вызывает `setWebhook` на `WEBHOOK_URL/api/telegram/webhook` с секретным токеном.
+6. `WEBHOOK_URL` задавать не обязательно: на Render приложение берёт `RENDER_EXTERNAL_URL` автоматически. Укажите его только для своего домена (без слэша на конце). При старте приложение само вызывает `setWebhook` на `<URL>/api/telegram/webhook` с секретным токеном.
 
 Проверить, что webhook установлен: откройте в браузере
 
@@ -205,10 +204,7 @@ https://api.telegram.org/bot<ТОКЕН>/getWebhookInfo
 | `ADMIN_PASSWORD_HASH` | bcrypt-хеш из `npm run hash -- "пароль"` |
 | `TELEGRAM_BOT_TOKEN` | токен из BotFather |
 | `TELEGRAM_CHAT_ID` | ваш chat_id или id канала |
-| `WEBHOOK_URL` | `https://<имя-сервиса>.onrender.com` |
-| `TELEGRAM_WEBHOOK_SECRET` | hex-строка из шага 3 |
-
-`SESSION_SECRET` Render сгенерирует сам (`generateValue: true`). `TELEGRAM_WEBHOOK_SECRET` вставьте вручную: Telegram разрешает в секрете только латиницу, цифры, `_` и `-`, поэтому автогенерация Render здесь не подходит. `NODE_ENV=production`, `TZ=Europe/Moscow` и `NODE_VERSION` уже прописаны в `render.yaml`.
+`SESSION_SECRET` Render сгенерирует сам (`generateValue: true`). `WEBHOOK_URL` и `TELEGRAM_WEBHOOK_SECRET` заполнять не нужно: первый берётся из `RENDER_EXTERNAL_URL`, второй генерируется при старте и сразу уходит в `setWebhook`. `NODE_ENV=production`, `TZ=Europe/Moscow` и `NODE_VERSION` уже прописаны в `render.yaml`.
 
 5. Нажмите **Apply** / **Create**. Первый билд: `npm ci && npm run build`, старт: `npm start` (миграции → сервер).
 6. Дождитесь статуса **Live** и откройте публичный URL.
@@ -238,8 +234,8 @@ https://api.telegram.org/bot<ТОКЕН>/getWebhookInfo
 | `ADMIN_PASSWORD_HASH` | да | bcrypt-хеш пароля (`npm run hash -- "пароль"`) |
 | `TELEGRAM_BOT_TOKEN` | для бота | токен из @BotFather |
 | `TELEGRAM_CHAT_ID` | для бота | куда присылать результаты |
-| `WEBHOOK_URL` | для webhook | публичный URL сервиса без слэша на конце |
-| `TELEGRAM_WEBHOOK_SECRET` | для webhook | секрет заголовка `X-Telegram-Bot-Api-Secret-Token` |
+| `WEBHOOK_URL` | нет | свой домен; на Render по умолчанию `RENDER_EXTERNAL_URL` |
+| `TELEGRAM_WEBHOOK_SECRET` | нет | секрет webhook; если пусто, генерируется при старте |
 | `NODE_ENV` | да | `production` на Render |
 | `PORT` | нет | Render задаёт сам; локально по умолчанию 3000 |
 | `TZ` | нет | часовой пояс дат, по умолчанию `Europe/Moscow` |
@@ -251,7 +247,7 @@ https://api.telegram.org/bot<ТОКЕН>/getWebhookInfo
 
 ## Шаг 6. Миграции и первый админ
 
-**Миграции.** Уже готовы в `prisma/migrations/`. Применяются автоматически командой `npm start` (и `npm run dev`). Вручную:
+**Миграции.** Уже готовы в `prisma/migrations/`. `npm start` вызывает `scripts/start.js`: он проверяет `DATABASE_URL` и `SESSION_SECRET`, применяет `prisma migrate deploy` и только потом запускает сервер. При ошибке в логе будет понятное сообщение, а не голый `P1012`. `npm run dev` тоже применяет миграции. Вручную:
 
 ```bash
 npm run db:deploy     # или npx prisma migrate deploy
@@ -312,11 +308,24 @@ npm run db:status
 
 ---
 
+## Что автоматизировано
+
+- `npm start` → `scripts/start.js`: проверка `DATABASE_URL` и `SESSION_SECRET`, затем `prisma migrate deploy`, затем сервер. При отсутствии переменной — понятное сообщение вместо `P1012`.
+- `render.yaml`: Render сам создаёт Web Service, выставляет `NODE_ENV`, `TZ`, `NODE_VERSION` и генерирует `SESSION_SECRET`.
+- `WEBHOOK_URL` подставляется из `RENDER_EXTERNAL_URL`; `TELEGRAM_WEBHOOK_SECRET` генерируется при старте.
+- Telegram webhook переустанавливается при каждом запуске сервиса.
+- Таблица сессий входит в миграцию — отдельный SQL не нужен.
+
+Ручными остаются только секреты ваших аккаунтов: `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` — их нельзя хранить в репозитории.
+
+---
+
 ## Если что-то не работает
 
 | Симптом | Что проверить |
 | --- | --- |
 | `DATABASE_URL не задан` / падение при старте | переменная добавлена в Render → Environment, значения сохранены, сервис перезапущен |
+| `P1012: Environment variable not found: DATABASE_URL` | сборка проходит, но старт падает: в Render нет `DATABASE_URL`. Dashboard → сервис → **Environment** → **Add Environment Variable** → Key `DATABASE_URL`, Value — строка Neon → **Save** (сервис перезапустится). Если старт остался старым: **Manual Deploy → Deploy latest commit** |
 | `P1001: Can't reach database server` | строка Neon скопирована целиком, проект Neon не в состоянии idle, `sslmode=require` есть |
 | `The table ... does not exist` | не прошли миграции: `npm run db:deploy` локально или **Manual Deploy** на Render, смотрите лог билда |
 | Логин не принимается | хеш сгенерирован тем же bcrypt и вставлен целиком (`$2b$12$...`), логин совпадает с `ADMIN_USERNAME`; при `NODE_ENV=production` cookie `secure`, вход только по https |

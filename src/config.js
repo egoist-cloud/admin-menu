@@ -28,7 +28,7 @@ const config = {
   telegram: {
     token: text(process.env.TELEGRAM_BOT_TOKEN),
     chatId: text(process.env.TELEGRAM_CHAT_ID),
-    webhookUrl: text(process.env.WEBHOOK_URL).replace(/\/+$/, ''),
+    webhookUrl: text(process.env.WEBHOOK_URL || process.env.RENDER_EXTERNAL_URL).replace(/\/+$/, ''),
     webhookSecret: text(process.env.TELEGRAM_WEBHOOK_SECRET),
   },
   paths: {
@@ -88,9 +88,9 @@ function assertConfig() {
       console.warn('[telegram] WEBHOOK_URL не задан — webhook не будет установлен автоматически.');
     }
     if (!config.telegram.webhookSecret) {
-      console.warn('[telegram] TELEGRAM_WEBHOOK_SECRET не задан — webhook не принимает запросы (это обязательно).');
+      console.warn('[telegram] TELEGRAM_WEBHOOK_SECRET не задан — сгенерирую случайный при старте, webhook всё равно защищён.');
     } else if (!/^[A-Za-z0-9_-]{1,256}$/.test(config.telegram.webhookSecret)) {
-      console.warn('[telegram] TELEGRAM_WEBHOOK_SECRET содержит недопустимые символы: Telegram разрешает только A-Z, a-z, 0-9, _ и -.');
+      console.warn('[telegram] TELEGRAM_WEBHOOK_SECRET содержит недопустимые символы — будет заменён сгенерированным.');
     }
   }
 
