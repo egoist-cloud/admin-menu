@@ -23,17 +23,25 @@ async function verifyCredentials(username, password) {
 
   const userMatches = safeEqual(submittedUser, config.admin.username);
 
+  let passwordMatches = false;
+
   if (config.admin.passwordHash) {
-    let passwordMatches = false;
     try {
       passwordMatches = await bcrypt.compare(submittedPassword, config.admin.passwordHash);
     } catch {
       passwordMatches = false;
     }
-    return userMatches && passwordMatches;
+  } else {
+    passwordMatches = safeEqual(submittedPassword, config.admin.password);
   }
 
-  const passwordMatches = safeEqual(submittedPassword, config.admin.password);
+  if (!userMatches || !passwordMatches) {
+    // В логах Render видно, что именно не совпало. Пароль не логируется.
+    console.warn(
+      `[admin] неудачный вход: логин ${userMatches ? 'совпал' : 'не совпал'}, пароль ${passwordMatches ? 'совпал' : 'не совпал'}.`,
+    );
+  }
+
   return userMatches && passwordMatches;
 }
 

@@ -352,6 +352,7 @@ npm run db:status
 | `unable to verify the first certificate` / `self-signed certificate` | в `DATABASE_URL` нет `?sslmode=require`; добавьте параметр. Для managed-баз пул сессий сам отключает проверку цепочки в режиме `require` |
 | `The table ... does not exist` | не прошли миграции: `npm run db:deploy` локально или **Manual Deploy** на Render, смотрите лог билда |
 | Логин не принимается | хеш сгенерирован тем же bcrypt и вставлен целиком (`$2b$12$...`), логин совпадает с `ADMIN_USERNAME`; при `NODE_ENV=production` cookie `secure`, вход только по https |
+| «Неверный логин или пароль» | 1) В Render `ADMIN_USERNAME` = ровно тот логин, что вы вводите (регистр важен, без кавычек). 2) Перегенерируйте хеш: `npm run hash -- "пароль"` и вставьте в `ADMIN_PASSWORD_HASH` только строку, начинающуюся с `$2b$12$`. 3) **Save** и дождитесь рестарта. 4) В логах Render строка `[admin] неудачный вход: логин совпал/не совпал, пароль совпал/не совпал` покажет причину. Если заданы и хеш, и `ADMIN_PASSWORD`, используется хеш |
 | После входа снова форма логина | изменён `SESSION_SECRET` или cookie блокируется; проверьте, что открываете https-адрес Render |
 | Telegram молчит | бот добавлен в чат/канал, `TELEGRAM_CHAT_ID` верный (у канала минус в начале), бот админ канала, в логах нет `401 Unauthorized` |
 | `getWebhookInfo` показывает ошибку | `WEBHOOK_URL` без слэша на конце и совпадает с адресом Render; `TELEGRAM_WEBHOOK_SECRET` не менялся после установки webhook; перезапустите сервис |

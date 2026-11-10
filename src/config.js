@@ -8,6 +8,24 @@ function text(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+// Значения в Render часто копируют вместе с кавычками или целиком строкой
+// ADMIN_PASSWORD_HASH=... — снимаем это, чтобы вход не ломался из-за формата.
+function unquote(value) {
+  let result = text(value);
+  if (result.length >= 2) {
+    const first = result[0];
+    const last = result[result.length - 1];
+    if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+      result = result.slice(1, -1).trim();
+    }
+  }
+  return result;
+}
+
+function cleanEnv(value) {
+  return unquote(unquote(value).replace(/^[A-Z0-9_]+\s*=\s*/, ''));
+}
+
 const nodeEnv = text(process.env.NODE_ENV) || 'development';
 const isProduction = nodeEnv === 'production';
 
@@ -19,11 +37,11 @@ const config = {
   port: Number.isInteger(parsedPort) && parsedPort > 0 ? parsedPort : 3000,
   timezone: text(process.env.TZ) || 'Europe/Moscow',
   databaseUrl: text(process.env.DATABASE_URL),
-  sessionSecret: text(process.env.SESSION_SECRET),
+  sessionSecret: unquote(process.env.SESSION_SECRET),
   admin: {
-    username: text(process.env.ADMIN_USERNAME),
-    passwordHash: text(process.env.ADMIN_PASSWORD_HASH),
-    password: text(process.env.ADMIN_PASSWORD),
+    username: cleanEnv(process.env.ADMIN_USERNAME),
+    passwordHash: cleanEnv(process.env.ADMIN_PASSWORD_HASH),
+    password: unquote(process.env.ADMIN_PASSWORD),
   },
   telegram: {
     token: text(process.env.TELEGRAM_BOT_TOKEN),
@@ -76,6 +94,10 @@ function assertConfig() {
     console.warn('[конфигурация] ADMIN_USERNAME/ADMIN_PASSWORD_HASH не заданы — вход в админку отключён.');
   } else if (config.isProduction && !config.admin.passwordHash) {
     console.warn('[конфигурация] На проде используйте ADMIN_PASSWORD_HASH вместо ADMIN_PASSWORD.');
+  }
+
+  if (config.admin.passwordHash && !/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(config.admin.passwordHash)) {
+    console.warn('[конфигурация] ADMIN_PASSWORD_HASH не похож на bcrypt-хеш (ожидается $2b$12$...). Сгенерируйте: npm run hash -- "ваш-пароль"');
   }
 
   if (!config.telegram.token) {
