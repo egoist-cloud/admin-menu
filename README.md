@@ -206,8 +206,9 @@ https://api.telegram.org/bot<ТОКЕН>/getWebhookInfo
 | `TELEGRAM_BOT_TOKEN` | токен из BotFather |
 | `TELEGRAM_CHAT_ID` | ваш chat_id или id канала |
 | `WEBHOOK_URL` | `https://<имя-сервиса>.onrender.com` |
+| `TELEGRAM_WEBHOOK_SECRET` | hex-строка из шага 3 |
 
-`SESSION_SECRET` и `TELEGRAM_WEBHOOK_SECRET` Render сгенерирует сам (`generateValue: true`). `NODE_ENV=production`, `TZ=Europe/Moscow` и `NODE_VERSION` уже прописаны в `render.yaml`.
+`SESSION_SECRET` Render сгенерирует сам (`generateValue: true`). `TELEGRAM_WEBHOOK_SECRET` вставьте вручную: Telegram разрешает в секрете только латиницу, цифры, `_` и `-`, поэтому автогенерация Render здесь не подходит. `NODE_ENV=production`, `TZ=Europe/Moscow` и `NODE_VERSION` уже прописаны в `render.yaml`.
 
 5. Нажмите **Apply** / **Create**. Первый билд: `npm ci && npm run build`, старт: `npm start` (миграции → сервер).
 6. Дождитесь статуса **Live** и откройте публичный URL.

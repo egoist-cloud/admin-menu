@@ -89,6 +89,8 @@ function assertConfig() {
     }
     if (!config.telegram.webhookSecret) {
       console.warn('[telegram] TELEGRAM_WEBHOOK_SECRET не задан — webhook не принимает запросы (это обязательно).');
+    } else if (!/^[A-Za-z0-9_-]{1,256}$/.test(config.telegram.webhookSecret)) {
+      console.warn('[telegram] TELEGRAM_WEBHOOK_SECRET содержит недопустимые символы: Telegram разрешает только A-Z, a-z, 0-9, _ и -.');
     }
   }
 
