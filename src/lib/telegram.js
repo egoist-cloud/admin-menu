@@ -1,0 +1,112 @@
+'use strict';
+
+const { Bot, webhookCallback } = require('grammy');
+const config = require('../config');
+const { formatDateTime, escapeHtml } = require('./format');
+
+let bot = null;
+let webhookHandler = null;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function initTelegram() {
+  if (!config.telegram.token) {
+    console.warn('[telegram] бот отключён: нет TELEGRAM_BOT_TOKEN.');
+    return null;
+  }
+
+  bot = new Bot(config.telegram.token);
+
+  bot.command(['start', 'id', 'chatid'], async (ctx) => {
+    await ctx.reply(
+      [
+        `Ваш chat_id: ${ctx.chat.id}`,
+        '',
+        'Вставьте это число в переменную TELEGRAM_CHAT_ID на Render.',
+      ].join('\n'),
+    );
+  });
+
+  bot.on('message:text', async (ctx) => {
+    if (ctx.message.text.startsWith('/')) return;
+    await ctx.reply(`Я присылаю результаты тестов. Ваш chat_id: ${ctx.chat.id}`);
+  });
+
+  bot.catch((error) => {
+    console.error('[telegram] ошибка обработки апдейта:', error);
+  });
+
+  if (config.telegram.webhookSecret) {
+    webhookHandler = webhookCallback(bot, 'express', { secretToken: config.telegram.webhookSecret });
+  }
+
+  return bot;
+}
+
+async function setupTelegramWebhook() {
+  if (!bot) return false;
+
+  if (!config.telegram.webhookUrl) {
+    console.warn('[telegram] WEBHOOK_URL не задан — webhook не установлен.');
+    return false;
+  }
+  if (!config.telegram.webhookSecret) {
+    console.warn('[telegram] TELEGRAM_WEBHOOK_SECRET не задан — webhook не будет установлен без секрета.');
+    return false;
+  }
+
+  try {
+    const me = await bot.api.getMe();
+    console.log(`[telegram] бот @${me.username} на связи.`);
+  } catch (error) {
+    console.error('[telegram] не удалось проверить токен бота:', error && error.message ? error.message : error);
+  }
+
+  const url = `${config.telegram.webhookUrl}/api/telegram/webhook`;
+
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    try {
+      await bot.api.setWebhook(url, {
+        secret_token: config.telegram.webhookSecret,
+        drop_pending_updates: true,
+        allowed_updates: ['message'],
+      });
+      console.log(`[telegram] webhook установлен: ${url}`);
+      return true;
+    } catch (error) {
+      const message = error && error.message ? error.message : String(error);
+      console.error(`[telegram] не удалось установить webhook (попытка ${attempt}/5): ${message}`);
+      if (attempt < 5) await sleep(attempt * 2000);
+    }
+  }
+
+  console.error('[telegram] webhook не установлен. Проверьте TELEGRAM_BOT_TOKEN и WEBHOOK_URL.');
+  return false;
+}
+
+async function notifyNewSubmission({ participantName, testTitle, score, totalQuestions, createdAt }) {
+  if (!bot) return false;
+  if (!config.telegram.chatId) {
+    console.warn('[telegram] TELEGRAM_CHAT_ID не задан — уведомление не отправлено.');
+    return false;
+  }
+
+  const text = [
+    '📝 <b>Новый результат</b>',
+    `Имя: ${escapeHtml(participantName)}`,
+    `Тест: ${escapeHtml(testTitle)}`,
+    `Время: ${formatDateTime(createdAt)}`,
+    `Результат: ${score} / ${totalQuestions}`,
+  ].join('\n');
+
+  await bot.api.sendMessage(config.telegram.chatId, text, { parse_mode: 'HTML' });
+  return true;
+}
+
+function getWebhookHandler() {
+  return webhookHandler;
+}
+
+module.exports = { initTelegram, setupTelegramWebhook, notifyNewSubmission, getWebhookHandler };

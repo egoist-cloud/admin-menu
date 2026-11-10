@@ -1,0 +1,33 @@
+{
+  "name": "admin-menu",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Онлайн-тесты: публичный сайт, админ-панель и Telegram-бот в одном Web Service",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "postinstall": "prisma generate",
+    "build": "prisma generate",
+    "dev": "prisma migrate deploy && node --watch src/server.js",
+    "start": "prisma migrate deploy && node src/server.js",
+    "db:deploy": "prisma migrate deploy",
+    "db:status": "prisma migrate status",
+    "db:studio": "prisma studio",
+    "hash": "node scripts/hash-password.js"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3",
+    "bcryptjs": "^3.0.3",
+    "connect-pg-simple": "^10.0.0",
+    "dotenv": "^18.0.10",
+    "ejs": "^7.0.2",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.4",
+    "express-session": "^1.19.0",
+    "grammy": "^1.46.0",
+    "helmet": "^8.3.0",
+    "prisma": "6.19.3"
+  }
+}

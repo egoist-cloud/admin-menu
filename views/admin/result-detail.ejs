@@ -1,0 +1,49 @@
+<%- include('../partials/header') %>
+
+<div class="page-head">
+  <div>
+    <h1>Результат #<%= submission.id %></h1>
+    <p class="muted"><%= formatDateTime(submission.createdAt) %></p>
+  </div>
+  <a class="btn btn-ghost" href="/admin/results">← К результатам</a>
+</div>
+
+<div class="card summary-grid">
+  <div>
+    <span class="summary-label">Имя</span>
+    <span class="summary-value"><%= submission.participantName %></span>
+  </div>
+  <div>
+    <span class="summary-label">Тест</span>
+    <span class="summary-value"><%= submission.test.title %></span>
+  </div>
+  <div>
+    <span class="summary-label">Результат</span>
+    <span class="summary-value"><%= submission.score %> / <%= submission.totalQuestions %> (<%= formatPercent(submission.score, submission.totalQuestions) %>)</span>
+  </div>
+  <div>
+    <span class="summary-label">Дата</span>
+    <span class="summary-value"><%= formatDateTime(submission.createdAt) %></span>
+  </div>
+</div>
+
+<% if (groups.length === 0) { %>
+  <div class="card empty">В этом прохождении нет сохранённых ответов.</div>
+<% } else { %>
+  <ol class="answer-list">
+    <% groups.forEach((group, index) => { %>
+      <li class="card answer-item <%= group.isCorrect ? 'is-correct' : 'is-wrong' %>">
+        <div class="answer-head">
+          <span class="question-number"><%= index + 1 %></span>
+          <span class="answer-status"><%= group.isCorrect ? '✓' : '✗' %></span>
+          <span><%= group.questionText %></span>
+        </div>
+        <div class="answer-body">
+          Выбранные ответы: <strong><%= group.answers.join(', ') %></strong>
+        </div>
+      </li>
+    <% }) %>
+  </ol>
+<% } %>
+
+<%- include('../partials/footer') %>

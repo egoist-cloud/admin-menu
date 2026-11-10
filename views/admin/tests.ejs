@@ -1,0 +1,71 @@
+<%- include('../partials/header') %>
+
+<div class="page-head">
+  <div>
+    <h1>Тесты</h1>
+    <p class="muted">Всего: <%= tests.length %></p>
+  </div>
+  <a class="btn btn-primary" href="/admin/tests/new">Создать тест</a>
+</div>
+
+<% if (tests.length === 0) { %>
+  <div class="card empty">
+    <p>Тестов пока нет.</p>
+    <p class="muted small">Создайте первый тест — он появится на главной после публикации.</p>
+  </div>
+<% } else { %>
+  <div class="card table-card">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Название</th>
+            <th>Статус</th>
+            <th>Вопросов</th>
+            <th>Результатов</th>
+            <th>Создан</th>
+            <th class="actions-col">Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% tests.forEach((test) => { %>
+            <tr>
+              <td data-label="Название">
+                <a class="strong-link" href="/admin/tests/<%= test.id %>/edit"><%= test.title %></a>
+                <% if (test.description) { %>
+                  <div class="muted small"><%= test.description %></div>
+                <% } %>
+              </td>
+              <td data-label="Статус">
+                <span class="badge <%= test.isPublished ? 'badge-ok' : 'badge-draft' %>">
+                  <%= test.isPublished ? 'Опубликован' : 'Черновик' %>
+                </span>
+              </td>
+              <td data-label="Вопросов"><%= test._count.questions %></td>
+              <td data-label="Результатов">
+                <a href="/admin/results?testId=<%= test.id %>"><%= test._count.submissions %></a>
+              </td>
+              <td data-label="Создан"><%= formatDateTime(test.createdAt) %></td>
+              <td data-label="Действия">
+                <div class="row-actions">
+                  <a class="btn btn-ghost btn-sm" href="/admin/tests/<%= test.id %>/edit">Изменить</a>
+                  <form method="post" action="/admin/tests/<%= test.id %>/publish" class="inline-form">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="published" value="<%= test.isPublished ? '0' : '1' %>">
+                    <button class="btn btn-ghost btn-sm" type="submit"><%= test.isPublished ? 'Снять' : 'Опубликовать' %></button>
+                  </form>
+                  <form method="post" action="/admin/tests/<%= test.id %>/delete" class="inline-form" data-confirm="Удалить тест «<%= test.title %>» вместе со всеми результатами?">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn-danger btn-sm" type="submit">Удалить</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>
+
+<%- include('../partials/footer') %>

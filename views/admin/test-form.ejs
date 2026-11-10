@@ -1,0 +1,77 @@
+<%- include('../partials/header') %>
+
+<div class="page-head">
+  <div>
+    <h1><%= test ? 'Редактирование теста' : 'Новый тест' %></h1>
+    <p class="muted">Название, описание и вопросы. Правильный ответ отмечается галочкой слева от варианта.</p>
+  </div>
+  <a class="btn btn-ghost" href="/admin/tests">← К списку</a>
+</div>
+
+<% if (errors.length > 0) { %>
+  <div class="alert alert-error">
+    <ul>
+      <% errors.forEach((error) => { %>
+        <li><%= error %></li>
+      <% }) %>
+    </ul>
+  </div>
+<% } %>
+
+<form method="post" action="<%= test ? '/admin/tests/' + test.id : '/admin/tests' %>" id="test-form" class="test-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="questionsJson" id="questions-json">
+
+  <div class="card">
+    <label class="field">
+      <span class="field-label">Название теста</span>
+      <input class="input" type="text" name="title" value="<%= form.title %>" maxlength="200" placeholder="Например, Основы Python" required>
+    </label>
+
+    <label class="field">
+      <span class="field-label">Описание <span class="muted small">(необязательно)</span></span>
+      <textarea class="input textarea" name="description" maxlength="2000" rows="3" placeholder="Коротко о том, что проверяет тест"><%= form.description %></textarea>
+    </label>
+  </div>
+
+  <div class="section-head">
+    <h2>Вопросы</h2>
+    <p class="muted small">У каждого вопроса минимум два варианта ответа и хотя бы один правильный.</p>
+  </div>
+
+  <div id="questions" class="questions"></div>
+
+  <div class="card empty" id="questions-empty" hidden>
+    <p class="muted">Добавьте первый вопрос.</p>
+  </div>
+
+  <template id="question-template">
+    <section class="question-editor card">
+      <div class="question-editor-head">
+        <span class="question-number q-index">1</span>
+        <input class="input q-text" type="text" maxlength="1000" placeholder="Текст вопроса">
+        <label class="checkbox small">
+          <input type="checkbox" class="q-multiple">
+          несколько правильных
+        </label>
+        <button type="button" class="btn btn-ghost btn-sm q-remove">Удалить</button>
+      </div>
+      <div class="options"></div>
+      <button type="button" class="btn btn-ghost btn-sm opt-add">+ Вариант ответа</button>
+    </section>
+  </template>
+
+  <div class="card form-actions">
+    <button class="btn btn-ghost" type="button" id="add-question">+ Добавить вопрос</button>
+    <div class="spacer"></div>
+    <button class="btn btn-secondary" type="submit" name="action" value="save">Сохранить</button>
+    <button class="btn btn-primary" type="submit" name="action" value="publish">
+      <%= test && test.isPublished ? 'Сохранить (тест опубликован)' : 'Сохранить и опубликовать' %>
+    </button>
+  </div>
+</form>
+
+<textarea id="initial-questions" class="hidden" aria-hidden="true"><%= initialQuestions %></textarea>
+
+<script src="/admin.js" defer></script>
+<%- include('../partials/footer') %>

@@ -1,0 +1,73 @@
+<%- include('partials/header') %>
+
+<div class="page-head">
+  <div>
+    <h1><%= test.title %></h1>
+    <% if (test.description) { %>
+      <p class="muted"><%= test.description %></p>
+    <% } %>
+  </div>
+  <span class="badge badge-ok"><%= test.questions.length %> <%= plural(test.questions.length, ['вопрос', 'вопроса', 'вопросов']) %></span>
+</div>
+
+<% if (errors.length > 0) { %>
+  <div class="alert alert-error">
+    <ul>
+      <% errors.forEach((error) => { %>
+        <li><%= error %></li>
+      <% }) %>
+    </ul>
+  </div>
+<% } %>
+
+<form method="post" action="/tests/<%= test.id %>/submit" id="test-form" class="test-form">
+  <div class="card">
+    <label class="field">
+      <span class="field-label">Ваше имя</span>
+      <input
+        class="input"
+        type="text"
+        name="participantName"
+        value="<%= participantName %>"
+        maxlength="80"
+        placeholder="Например, Иван"
+        autocomplete="name"
+        required
+      >
+    </label>
+    <p class="muted small">Имя нужно, чтобы администратор понял, чей это результат.</p>
+  </div>
+
+  <% test.questions.forEach((question, index) => { %>
+    <fieldset class="card question" data-multiple="<%= question.multiple ? '1' : '0' %>">
+      <legend class="question-title">
+        <span class="question-number"><%= index + 1 %></span>
+        <span><%= question.text %></span>
+      </legend>
+      <p class="muted small">
+        <%= question.multiple ? 'Можно выбрать несколько ответов' : 'Выберите один ответ' %>
+      </p>
+      <div class="options-list">
+        <% question.options.forEach((option) => { %>
+          <label class="option">
+            <input
+              type="<%= question.multiple ? 'checkbox' : 'radio' %>"
+              name="q_<%= question.id %>"
+              value="<%= option.id %>"
+              <%= question.multiple ? '' : 'required' %>
+            >
+            <span><%= option.text %></span>
+          </label>
+        <% }) %>
+      </div>
+    </fieldset>
+  <% }) %>
+
+  <div class="card form-actions">
+    <span class="muted small">После отправки изменить ответы нельзя.</span>
+    <button class="btn btn-primary btn-lg" type="submit">Завершить тест</button>
+  </div>
+</form>
+
+<script src="/test.js" defer></script>
+<%- include('partials/footer') %>

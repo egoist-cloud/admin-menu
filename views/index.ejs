@@ -1,0 +1,33 @@
+<%- include('partials/header') %>
+
+<section class="hero">
+  <h1>Онлайн-тесты</h1>
+  <p class="muted">Выберите тест, введите имя и ответьте на вопросы. Результат сразу увидит администратор.</p>
+</section>
+
+<% if (tests.length === 0) { %>
+  <div class="card empty">
+    <p>Пока нет опубликованных тестов.</p>
+    <p class="muted small">Администратор может создать тест в <a href="/admin/login">админ-панели</a>.</p>
+  </div>
+<% } else { %>
+  <div class="test-grid">
+    <% tests.forEach((test) => { %>
+      <article class="card test-card">
+        <div class="test-card-head">
+          <h2><%= test.title %></h2>
+          <span class="badge badge-ok"><%= test._count.questions %> <%= plural(test._count.questions, ['вопрос', 'вопроса', 'вопросов']) %></span>
+        </div>
+        <% if (test.description) { %>
+          <p class="muted"><%= test.description %></p>
+        <% } %>
+        <div class="test-card-foot">
+          <span class="muted small">Прохождений: <%= test._count.submissions %></span>
+          <a class="btn btn-primary" href="/tests/<%= test.id %>">Пройти тест</a>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+<% } %>
+
+<%- include('partials/footer') %>

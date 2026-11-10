@@ -1,0 +1,37 @@
+<%- include('../partials/header') %>
+
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <h1>Вход в админ-панель</h1>
+
+    <% if (!adminConfigured) { %>
+      <div class="alert alert-error">
+        Вход не настроен. Задайте переменные <code>ADMIN_USERNAME</code> и <code>ADMIN_PASSWORD_HASH</code>,
+        затем перезапустите сервис.
+      </div>
+    <% } %>
+
+    <% if (error) { %>
+      <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <form method="post" action="/admin/login">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="next" value="<%= nextTarget %>">
+
+      <label class="field">
+        <span class="field-label">Логин</span>
+        <input class="input" type="text" name="username" value="<%= username %>" autocomplete="username" required autofocus>
+      </label>
+
+      <label class="field">
+        <span class="field-label">Пароль</span>
+        <input class="input" type="password" name="password" autocomplete="current-password" required>
+      </label>
+
+      <button class="btn btn-primary btn-block" type="submit">Войти</button>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

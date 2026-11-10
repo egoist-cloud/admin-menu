@@ -1,0 +1,78 @@
+<%- include('../partials/header') %>
+
+<div class="page-head">
+  <div>
+    <h1>Результаты</h1>
+    <p class="muted">Всего прохождений: <%= total %></p>
+  </div>
+  <a class="btn btn-secondary" href="/admin/results/export.csv<%= selectedTestId ? '?testId=' + selectedTestId : '' %>">Экспорт в CSV</a>
+</div>
+
+<form method="get" action="/admin/results" class="card filter-form">
+  <label class="field">
+    <span class="field-label">Тест</span>
+    <select class="input" name="testId">
+      <option value="">Все тесты</option>
+      <% tests.forEach((test) => { %>
+        <option value="<%= test.id %>" <%= selectedTestId === test.id ? 'selected' : '' %>><%= test.title %></option>
+      <% }) %>
+    </select>
+  </label>
+  <button class="btn btn-primary" type="submit">Показать</button>
+  <% if (selectedTestId) { %>
+    <a class="btn btn-ghost" href="/admin/results">Сбросить</a>
+  <% } %>
+</form>
+
+<% if (submissions.length === 0) { %>
+  <div class="card empty">
+    <p>Прохождений пока нет.</p>
+    <p class="muted small">Отправьте тест друзьям — результаты появятся здесь и придут в Telegram.</p>
+  </div>
+<% } else { %>
+  <div class="card table-card">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Имя</th>
+            <th>Тест</th>
+            <th>Дата и время</th>
+            <th>Результат</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% submissions.forEach((submission) => { %>
+            <tr>
+              <td data-label="Имя"><%= submission.participantName %></td>
+              <td data-label="Тест"><%= submission.test.title %></td>
+              <td data-label="Дата"><%= formatDateTime(submission.createdAt) %></td>
+              <td data-label="Результат">
+                <strong><%= submission.score %> / <%= submission.totalQuestions %></strong>
+                <span class="muted small">(<%= formatPercent(submission.score, submission.totalQuestions) %>)</span>
+              </td>
+              <td data-label="Детали">
+                <a class="btn btn-ghost btn-sm" href="/admin/results/<%= submission.id %>">Детали</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <% if (totalPages > 1) { %>
+    <nav class="pagination">
+      <% if (page > 1) { %>
+        <a class="btn btn-ghost btn-sm" href="/admin/results?page=<%= page - 1 %><%= selectedTestId ? '&testId=' + selectedTestId : '' %>">← Назад</a>
+      <% } %>
+      <span class="muted small">Страница <%= page %> из <%= totalPages %></span>
+      <% if (page < totalPages) { %>
+        <a class="btn btn-ghost btn-sm" href="/admin/results?page=<%= page + 1 %><%= selectedTestId ? '&testId=' + selectedTestId : '' %>">Вперёд →</a>
+      <% } %>
+    </nav>
+  <% } %>
+<% } %>
+
+<%- include('../partials/footer') %>
