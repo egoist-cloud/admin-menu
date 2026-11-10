@@ -10,6 +10,7 @@ const { asyncHandler } = require('../lib/async-handler');
 const { formatDateTime, formatPercent } = require('../lib/format');
 const { parseTestForm } = require('../lib/test-payload');
 const { requireAdmin, verifyCredentials } = require('../middleware/auth');
+const { notifyNewSubmission, sendTestMessage, getTelegramStatus } = require('../lib/telegram');
 const { ensureCsrfToken, csrfProtection, sameOriginOnly } = require('../middleware/csrf');
 
 const router = express.Router();
@@ -324,6 +325,54 @@ router.post(
     await prisma.test.delete({ where: { id } });
     setFlash(req, 'success', `Тест «${existing.title}» удалён вместе с результатами.`);
     return res.redirect('/admin/tests');
+  }),
+);
+
+router.get('/telegram', (req, res) => {
+  res.render('admin/telegram', { title: 'Telegram', status: getTelegramStatus() });
+});
+
+router.post(
+  '/telegram/test',
+  csrfProtection,
+  asyncHandler(async (req, res) => {
+    try {
+      await sendTestMessage();
+      setFlash(req, 'success', 'Тестовое сообщение отправлено в Telegram.');
+    } catch (error) {
+      setFlash(req, 'error', `Telegram не принял сообщение: ${error.message}`);
+    }
+    res.redirect('/admin/telegram');
+  }),
+);
+
+router.post(
+  '/results/:id/notify',
+  csrfProtection,
+  asyncHandler(async (req, res) => {
+    const id = parseId(req.params.id);
+    if (!id) return renderNotFound(res);
+
+    const submission = await prisma.submission.findUnique({
+      where: { id },
+      include: { test: { select: { title: true } } },
+    });
+    if (!submission) return renderNotFound(res);
+
+    try {
+      await notifyNewSubmission({
+        participantName: submission.participantName,
+        testTitle: submission.test.title,
+        score: submission.score,
+        totalQuestions: submission.totalQuestions,
+        createdAt: submission.createdAt,
+      });
+      setFlash(req, 'success', `Результат #${submission.id} отправлен в Telegram.`);
+    } catch (error) {
+      setFlash(req, 'error', `Telegram не принял сообщение: ${error.message}`);
+    }
+
+    return res.redirect(`/admin/results/${submission.id}`);
   }),
 );
 

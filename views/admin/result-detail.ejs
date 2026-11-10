@@ -5,7 +5,13 @@
     <h1>Результат #<%= submission.id %></h1>
     <p class="muted"><%= formatDateTime(submission.createdAt) %></p>
   </div>
-  <a class="btn btn-ghost" href="/admin/results">← К результатам</a>
+  <div class="row-actions">
+    <form method="post" action="/admin/results/<%= submission.id %>/notify" class="inline-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn-secondary" type="submit">Отправить в Telegram</button>
+    </form>
+    <a class="btn btn-ghost" href="/admin/results">← К результатам</a>
+  </div>
 </div>
 
 <div class="card summary-grid">

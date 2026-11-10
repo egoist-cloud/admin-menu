@@ -1,0 +1,65 @@
+<%- include('../partials/header') %>
+
+<div class="page-head">
+  <div>
+    <h1>Telegram</h1>
+    <p class="muted">Куда уходят результаты тестов и как проверить отправку.</p>
+  </div>
+  <a class="btn btn-ghost" href="/admin/tests">← К тестам</a>
+</div>
+
+<div class="card summary-grid">
+  <div>
+    <span class="summary-label">Бот</span>
+    <span class="summary-value">
+      <%= status.tokenConfigured ? (status.botUsername ? '@' + status.botUsername : 'токен задан') : 'не настроен' %>
+    </span>
+  </div>
+  <div>
+    <span class="summary-label">Chat ID</span>
+    <span class="summary-value"><%= status.chatId ? status.chatIdMasked : 'не задан' %></span>
+  </div>
+  <div>
+    <span class="summary-label">Webhook</span>
+    <span class="summary-value small"><%= status.webhookUrl || 'не определён' %></span>
+  </div>
+</div>
+
+<% if (status.lastError) { %>
+  <div class="alert alert-error">
+    Последняя ошибка Telegram: <strong><%= status.lastError %></strong>
+  </div>
+<% } %>
+
+<% if (!status.tokenConfigured || !status.chatId) { %>
+  <div class="alert alert-error">
+    Настроено не всё: добавьте в Render → Environment
+    <% if (!status.tokenConfigured) { %><code>TELEGRAM_BOT_TOKEN</code><% } %>
+    <% if (!status.tokenConfigured && !status.chatId) { %> и <% } %>
+    <% if (!status.chatId) { %><code>TELEGRAM_CHAT_ID</code><% } %>
+    и нажмите Save.
+  </div>
+<% } %>
+
+<div class="card">
+  <h2>Проверка связи</h2>
+  <p class="muted">Бот отправит одно сообщение в указанный чат. Это не создаёт результат и не меняет базу.</p>
+  <form method="post" action="/admin/telegram/test">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button class="btn btn-primary" type="submit">Отправить тестовое сообщение</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Если сообщения не приходят</h2>
+  <ol class="muted">
+    <li>Откройте бота в Telegram и отправьте <code>/start</code> — он ответит вашим <code>chat_id</code>.</li>
+    <li>Сверьте, что <code>TELEGRAM_BOT_TOKEN</code> — от того же бота, которому вы пишете (имя бота показано выше).</li>
+    <li>Проверьте <code>TELEGRAM_CHAT_ID</code>: для личного чата это число без минуса, для канала — <code>-100...</code>, и бот должен быть админом канала.</li>
+    <li>Нажмите «Отправить тестовое сообщение» и прочитайте ошибку ниже или во всплывающем сообщении.</li>
+    <li>Старые результаты можно отправить вручную: «Результаты» → откройте запись → «Отправить в Telegram».</li>
+    <li>Если бот заблокирован (<code>403</code>), разблокируйте его в Telegram и повторите.</li>
+  </ol>
+</div>
+
+<%- include('../partials/footer') %>

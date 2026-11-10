@@ -19,6 +19,7 @@
         <% if (isAdmin) { %>
           <a class="nav-link <%= path.startsWith('/admin/tests') ? 'is-active' : '' %>" href="/admin/tests">Админка</a>
           <a class="nav-link <%= path.startsWith('/admin/results') ? 'is-active' : '' %>" href="/admin/results">Результаты</a>
+          <a class="nav-link <%= path.startsWith('/admin/telegram') ? 'is-active' : '' %>" href="/admin/telegram">Telegram</a>
           <form method="post" action="/admin/logout" class="inline-form">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <button type="submit" class="nav-link nav-button">Выйти</button>

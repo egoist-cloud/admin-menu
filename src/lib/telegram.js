@@ -8,6 +8,8 @@ const { formatDateTime, escapeHtml } = require('./format');
 let bot = null;
 let webhookHandler = null;
 let activeWebhookSecret = '';
+let botUsername = '';
+let lastError = null;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -69,6 +71,7 @@ async function setupTelegramWebhook() {
 
   try {
     const me = await bot.api.getMe();
+    botUsername = me.username || '';
     console.log(`[telegram] бот @${me.username} на связи.`);
   } catch (error) {
     console.error('[telegram] не удалось проверить токен бота:', error && error.message ? error.message : error);
@@ -97,10 +100,13 @@ async function setupTelegramWebhook() {
 }
 
 async function notifyNewSubmission({ participantName, testTitle, score, totalQuestions, createdAt }) {
-  if (!bot) return false;
+  if (!bot) {
+    lastError = 'Бот не запущен: проверьте TELEGRAM_BOT_TOKEN и перезапустите сервис.';
+    throw new Error(lastError);
+  }
   if (!config.telegram.chatId) {
-    console.warn('[telegram] TELEGRAM_CHAT_ID не задан — уведомление не отправлено.');
-    return false;
+    lastError = 'TELEGRAM_CHAT_ID не задан.';
+    throw new Error(lastError);
   }
 
   const text = [
@@ -111,12 +117,60 @@ async function notifyNewSubmission({ participantName, testTitle, score, totalQue
     `Результат: ${score} / ${totalQuestions}`,
   ].join('\n');
 
-  await bot.api.sendMessage(config.telegram.chatId, text, { parse_mode: 'HTML' });
-  return true;
+  try {
+    await bot.api.sendMessage(config.telegram.chatId, text, { parse_mode: 'HTML' });
+    lastError = null;
+    return true;
+  } catch (error) {
+    lastError = error && error.message ? error.message : String(error);
+    throw error;
+  }
+}
+
+async function sendTestMessage() {
+  if (!config.telegram.token) {
+    throw new Error('TELEGRAM_BOT_TOKEN не задан в Render → Environment.');
+  }
+  if (!bot) {
+    throw new Error('Бот не инициализирован: проверьте TELEGRAM_BOT_TOKEN и перезапустите сервис.');
+  }
+  if (!config.telegram.chatId) {
+    throw new Error('TELEGRAM_CHAT_ID не задан в Render → Environment.');
+  }
+
+  try {
+    await bot.api.sendMessage(
+      config.telegram.chatId,
+      '✅ Проверка связи: Admin Menu отправляет результаты в этот чат.',
+    );
+    lastError = null;
+  } catch (error) {
+    lastError = error && error.message ? error.message : String(error);
+    throw error;
+  }
+}
+
+function getTelegramStatus() {
+  const chatId = config.telegram.chatId;
+  return {
+    tokenConfigured: Boolean(config.telegram.token),
+    chatId,
+    chatIdMasked: chatId ? `${chatId.slice(0, 3)}…${chatId.slice(-3)}` : '',
+    webhookUrl: config.telegram.webhookUrl,
+    botUsername,
+    lastError,
+  };
 }
 
 function getWebhookHandler() {
   return webhookHandler;
 }
 
-module.exports = { initTelegram, setupTelegramWebhook, notifyNewSubmission, getWebhookHandler };
+module.exports = {
+  initTelegram,
+  setupTelegramWebhook,
+  notifyNewSubmission,
+  sendTestMessage,
+  getTelegramStatus,
+  getWebhookHandler,
+};
