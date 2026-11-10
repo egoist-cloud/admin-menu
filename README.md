@@ -5,7 +5,7 @@
 - **Сайт:** список опубликованных тестов, ввод имени, прохождение, страница «Спасибо».
 - **Админка:** вход по логину/паролю, создание и редактирование тестов, публикация, удаление, результаты с детализацией и экспорт в CSV.
 - **Telegram:** результат приходит в чат сразу после прохождения.
-- **База:** PostgreSQL (Neon) через Prisma, миграции применяются автоматически при старте.
+- **База:** PostgreSQL (Aiven или Neon) через Prisma, миграции применяются автоматически при старте.
 
 ---
 
@@ -14,7 +14,7 @@
 | Слой | Технология |
 | --- | --- |
 | Хостинг | Render Web Service (Free) |
-| База | Neon PostgreSQL (`DATABASE_URL`) |
+| База | PostgreSQL: Aiven Free (рекомендуется) или Neon (`DATABASE_URL`) |
 | Backend | Node.js 20+ / Express 5 |
 | ORM | Prisma 6 + миграции в репозитории |
 | Frontend | EJS (серверные шаблоны) + свой CSS/JS |
@@ -80,7 +80,7 @@ cp .env.example .env
 Откройте `.env` и заполните минимум:
 
 ```env
-DATABASE_URL="postgresql://...@ep-xxx.neon.tech/neondb?sslmode=require"
+DATABASE_URL="postgresql://avnadmin:ПАРОЛЬ@pg-xxx.aivencloud.com:12345/defaultdb?sslmode=require"
 SESSION_SECRET="любая-длинная-случайная-строка"
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD_HASH="$2b$12$..."
@@ -116,7 +116,7 @@ npm run dev
 - сайт — http://localhost:3000
 - админка — http://localhost:3000/admin/login
 
-`npm run dev` сначала выполняет `prisma migrate deploy` (создаёт таблицы в Neon), затем запускает сервер с авто-перезагрузкой.
+`npm run dev` сначала выполняет `prisma migrate deploy` (создаёт таблицы в Aiven/Neon), затем запускает сервер с авто-перезагрузкой.
 
 > Локально `WEBHOOK_URL` можно оставить пустым — сайт и уведомления в Telegram будут работать, просто бот не зарегистрирует webhook (Telegram не сможет достучаться до localhost). Для локальной проверки самого webhook используйте туннель (ngrok/cloudflared) и укажите его URL.
 
@@ -134,28 +134,48 @@ npm run dev
 
 ---
 
-## Шаг 2. База данных Neon
+## Шаг 2. База данных: Aiven (бесплатно, без карты)
 
-1. Зарегистрируйтесь на [neon.tech](https://neon.tech) (free plan).
-2. **New Project** → имя, регион ближе к Render (например, Frankfurt) → **Create project**.
-3. На странице проекта нажмите **Connect** (или **Connection string**).
-4. Выберите:
-   - **Connection string** / Node.js;
-   - **Direct connection** (хост без `-pooler`), не pooled — так проще с миграциями;
-   - при необходимости снимите галочку «Connection pooling».
-5. Скопируйте строку вида:
+Aiven Free — managed PostgreSQL: 1 ГБ диска, 1 ГБ RAM, без карты и без ограничения по времени. На free-плане сервис могут выключать после простоя — включается кнопкой **Power on** в консоли.
+
+### Регистрация и создание базы (2–5 минут)
+
+1. Откройте [aiven.io](https://aiven.io) → **Sign up** (Google/GitHub/email). Карта не нужна.
+2. В Console → **Create service**.
+3. Выберите **PostgreSQL** → план **Free** → регион ближе к Render (например, `Frankfurt`) → имя `admin-menu-db` → **Create service**.
+4. Дождитесь статуса **Running** (обычно 2–5 минут).
+
+### Где взять DATABASE_URL
+
+1. Откройте сервис → вкладка **Overview**.
+2. Найдите **Service URI** → нажмите **Copy** (пароль скрыт точками — нажмите значок глаза, чтобы увидеть).
+3. Строка выглядит так:
 
 ```text
-postgresql://neondb_owner:ПАРОЛЬ@ep-cool-name-123456.eu-central-1.aws.neon.tech/neondb?sslmode=require
+postgresql://avnadmin:ПАРОЛЬ@pg-xxxx-admin-menu-db.aivencloud.com:12345/defaultdb?sslmode=require
 ```
 
-Это и есть `DATABASE_URL`. Пароль меняется в Neon → Project → Settings → Reset password.
+Это и есть `DATABASE_URL`. Параметр `?sslmode=require` уже есть — добавлять ничего не нужно.
 
-> Встроенный Render PostgreSQL не используем: на Free он удаляется через 30 дней. Neon бесплатен и не привязан к Render.
+> Aiven требует TLS. `sslmode=require` достаточно, CA-сертификат скачивать не нужно. Не включайте connection pooling — на free-плане его нет, используйте Service URI напрямую. IP-фильтр не настраивайте: по умолчанию Aiven принимает подключения с любого IP, а у Render адреса динамические. Лимит подключений на free — 20; приложение держит около 6, этого достаточно.
 
-Схема создаётся автоматически при первом запуске (`prisma migrate deploy`). Никаких ручных SQL выполнять не нужно.
+Схема создаётся автоматически при первом запуске (`prisma migrate deploy`). Ручной SQL не нужен. Схему Prisma менять не нужно: Aiven — обычный PostgreSQL, `sslmode=require` поддерживается из коробки (и Prisma, и пулом сессий).
 
-**Если выбрали Supabase:** Project → Settings → Database → Connection string → URI. Берите прямой порт `5432` и добавьте `?sslmode=require`; пулер `6543` для миграций не подходит. Строка выглядит так: `postgresql://postgres:ПАРОЛЬ@db.xxx.supabase.co:5432/postgres?sslmode=require`.
+### Если сервис выключился
+
+Free-план Aiven может уходить в сон после простоя (приходит письмо). В Console у сервиса будет статус **Powered off** → нажмите **Power on** и подождите 1–2 минуты. Приложение в это время отвечает ошибкой `P1001`.
+
+### Альтернатива: Neon
+
+1. [neon.tech](https://neon.tech) → **New Project** → **Connect**.
+2. **Direct connection** (хост без `-pooler`), скопируйте строку `postgresql://...?sslmode=require`.
+3. Вставьте её в `DATABASE_URL` вместо строки Aiven.
+
+### Альтернатива: Supabase
+
+Project → Settings → Database → Connection string → URI, прямой порт `5432`, добавьте `?sslmode=require`. Пулер `6543` для миграций не подходит.
+
+> Встроенный Render PostgreSQL не используем: на Free он удаляется через 30 дней.
 
 ---
 
@@ -199,7 +219,7 @@ https://api.telegram.org/bot<ТОКЕН>/getWebhookInfo
 
 | Переменная | Значение |
 | --- | --- |
-| `DATABASE_URL` | строка подключения Neon |
+| `DATABASE_URL` | Service URI из Aiven (или строка Neon) |
 | `ADMIN_USERNAME` | логин админа, например `admin` |
 | `ADMIN_PASSWORD_HASH` | bcrypt-хеш из `npm run hash -- "пароль"` |
 | `TELEGRAM_BOT_TOKEN` | токен из BotFather |
@@ -228,7 +248,7 @@ https://api.telegram.org/bot<ТОКЕН>/getWebhookInfo
 
 | Переменная | Обязательна | Назначение |
 | --- | --- | --- |
-| `DATABASE_URL` | да | строка подключения Neon PostgreSQL |
+| `DATABASE_URL` | да | Service URI Aiven или строка Neon PostgreSQL |
 | `SESSION_SECRET` | да | подпись cookie сессии, минимум 16 символов |
 | `ADMIN_USERNAME` | да | логин администратора |
 | `ADMIN_PASSWORD_HASH` | да | bcrypt-хеш пароля (`npm run hash -- "пароль"`) |
@@ -301,7 +321,7 @@ npm run db:status
 ## Ограничения Render Free (учтено)
 
 - Сервис засыпает после 15 минут без трафика, первый запрос — до минуты. Это нормально, ничего в коде не «будим».
-- Нет постоянного диска: SQLite и загрузка файлов не используются, всё в Neon.
+- Нет постоянного диска: SQLite и загрузка файлов не используются, всё во внешней PostgreSQL (Aiven/Neon).
 - 512 MB RAM / 0.1 CPU: один процесс, без тяжёлых зависимостей.
 - Порт берётся из `PORT`, сервер слушает `0.0.0.0`.
 - Сессии хранятся в PostgreSQL (таблица `session`), поэтому вход в админку не сбрасывается после рестарта или сна.
@@ -325,8 +345,10 @@ npm run db:status
 | Симптом | Что проверить |
 | --- | --- |
 | `DATABASE_URL не задан` / падение при старте | переменная добавлена в Render → Environment, значения сохранены, сервис перезапущен |
-| `P1012: Environment variable not found: DATABASE_URL` | сборка проходит, но старт падает: в Render нет `DATABASE_URL`. Dashboard → сервис → **Environment** → **Add Environment Variable** → Key `DATABASE_URL`, Value — строка Neon → **Save** (сервис перезапустится). Если старт остался старым: **Manual Deploy → Deploy latest commit** |
-| `P1001: Can't reach database server` | строка Neon скопирована целиком, проект Neon не в состоянии idle, `sslmode=require` есть |
+| `P1012: Environment variable not found: DATABASE_URL` | сборка проходит, но старт падает: в Render нет `DATABASE_URL`. Dashboard → сервис → **Environment** → **Add Environment Variable** → Key `DATABASE_URL`, Value — Service URI Aiven или строка Neon → **Save** (сервис перезапустится). Если старт остался старым: **Manual Deploy → Deploy latest commit** |
+| `P1001: Can't reach database server` | строка скопирована целиком, `sslmode=require` есть, сервис Aiven включён (Running); у Neon проект не на паузе |
+| Aiven: сервис в статусе **Powered off** | free-план Aiven выключается после простоя: Console → сервис → **Power on**, подождите 1–2 минуты |
+| `unable to verify the first certificate` / `self-signed certificate` | в `DATABASE_URL` нет `?sslmode=require`; добавьте параметр. Для managed-баз пул сессий сам отключает проверку цепочки в режиме `require` |
 | `The table ... does not exist` | не прошли миграции: `npm run db:deploy` локально или **Manual Deploy** на Render, смотрите лог билда |
 | Логин не принимается | хеш сгенерирован тем же bcrypt и вставлен целиком (`$2b$12$...`), логин совпадает с `ADMIN_USERNAME`; при `NODE_ENV=production` cookie `secure`, вход только по https |
 | После входа снова форма логина | изменён `SESSION_SECRET` или cookie блокируется; проверьте, что открываете https-адрес Render |

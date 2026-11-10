@@ -22,7 +22,7 @@ if (!databaseUrl) {
   fail('DATABASE_URL не задан — без него Prisma не может подключиться к базе (ошибка P1012).', [
     'Render: Dashboard → ваш сервис → Environment → Add Environment Variable',
     '  Key:   DATABASE_URL',
-    '  Value: postgresql://user:password@host/dbname?sslmode=require (из Neon)',
+    '  Value: postgresql://user:password@host/dbname?sslmode=require (Service URI из Aiven или строка Neon)',
     'Затем Save — Render перезапустит сервис автоматически.',
     '',
     'Локально: скопируйте .env.example в .env и заполните DATABASE_URL.',
@@ -32,9 +32,15 @@ if (!databaseUrl) {
 if (!/^postgres(ql)?:\/\//i.test(databaseUrl)) {
   fail('DATABASE_URL имеет неверный формат.', [
     'Нужна строка подключения PostgreSQL, например:',
-    '  postgresql://user:password@ep-xxx.neon.tech/neondb?sslmode=require',
+    '  postgresql://avnadmin:ПАРОЛЬ@pg-xxx.aivencloud.com:12345/defaultdb?sslmode=require',
     'Не вставляйте сюда пароль, токен или URL сайта.',
   ]);
+}
+
+const isLocalDatabase = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/i.test(databaseUrl);
+if (!isLocalDatabase && !/[?&]sslmode=/i.test(databaseUrl)) {
+  console.warn('[запуск] в DATABASE_URL нет sslmode=require — для Aiven, Neon и Supabase TLS обычно обязателен.');
+  console.warn('          Добавьте ?sslmode=require в конец строки подключения.');
 }
 
 if (!sessionSecret) {
@@ -60,9 +66,9 @@ if (result.error) {
 if (result.status !== 0) {
   fail('миграции не применились — сервер не запущен.', [
     'Проверьте DATABASE_URL (хост, пароль, ?sslmode=require) и доступность базы.',
-    'P1001 — база недоступна: неверный хост/пароль, проект Neon на паузе или удалён.',
+    'P1001 — база недоступна: неверный хост/пароль, сервис Aiven выключен (Powered off) или проект Neon на паузе.',
     'P1012 — DATABASE_URL не задан или пустой.',
-    'P3005 — в базе уже есть таблицы без истории миграций: возьмите пустую базу Neon.',
+    'P3005 — в базе уже есть таблицы без истории миграций: возьмите пустую базу Aiven/Neon.',
     'Логи Prisma выше показывают точную причину.',
   ]);
 }

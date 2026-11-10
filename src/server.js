@@ -11,6 +11,7 @@ const { assertConfig } = require('./config');
 const { prisma } = require('./prisma');
 const { initTelegram, setupTelegramWebhook } = require('./lib/telegram');
 const { formatDateTime, formatPercent, plural } = require('./lib/format');
+const { pgConnectionString, sslConfig } = require('./lib/pg-ssl');
 const { ensureCsrfToken } = require('./middleware/csrf');
 const publicRoutes = require('./routes/public');
 const adminRoutes = require('./routes/admin');
@@ -52,14 +53,8 @@ app.use(
   }),
 );
 
-function sslConfig(connectionString) {
-  if (/sslmode=(require|verify-ca|verify-full)/i.test(connectionString)) return undefined;
-  if (/@(localhost|127\.0\.0\.1)[:/]/i.test(connectionString)) return false;
-  return { rejectUnauthorized: false };
-}
-
 const pool = new Pool({
-  connectionString: config.databaseUrl,
+  connectionString: pgConnectionString(config.databaseUrl),
   max: 3,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 10_000,
