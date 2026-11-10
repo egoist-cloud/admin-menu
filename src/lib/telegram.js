@@ -83,7 +83,9 @@ async function setupTelegramWebhook() {
     try {
       await bot.api.setWebhook(url, {
         secret_token: activeWebhookSecret,
-        drop_pending_updates: true,
+        // Не отбрасываем апдейты, пришедшие пока Render Free спал:
+        // именно /start во время холодного старта иначе теряется.
+        drop_pending_updates: false,
         allowed_updates: ['message'],
       });
       console.log(`[telegram] webhook установлен: ${url}`);
