@@ -1755,6 +1755,122 @@ body.modal-open {
     overflow-wrap: normal;
   }
 
+  .table-card {
+    overflow: visible;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .table-wrap {
+    overflow: visible;
+  }
+
+  .table {
+    display: block;
+    width: 100%;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  .table tr {
+    display: block;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, #28292d, #222327);
+  }
+
+  .table tbody tr:hover {
+    border-color: rgba(255, 59, 48, 0.4);
+    background: linear-gradient(180deg, #2b2c30, #242529);
+  }
+
+  .table td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+    padding: 6px 0;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    flex: 0 0 92px;
+    color: var(--muted);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .table td > * {
+    min-width: 0;
+  }
+
+  .table td .badge {
+    flex: 0 0 auto;
+  }
+
+  .table td[data-label="Статус"]::before {
+    flex-basis: 64px;
+  }
+
+  .table td[data-label="Название"],
+  .table td[data-label="Имя"],
+  .table td[data-label="Игрок"] {
+    display: block;
+    padding-bottom: 10px;
+  }
+
+  .table td[data-label="Название"]::before,
+  .table td[data-label="Имя"]::before,
+  .table td[data-label="Игрок"]::before {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .table td[data-label="Результат"] {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .table td[data-label="Действия"],
+  .table td[data-label="Действие"],
+  .table td[data-label="Детали"] {
+    display: block;
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-soft);
+  }
+
+  .table td[data-label="Действия"]::before,
+  .table td[data-label="Действие"]::before,
+  .table td[data-label="Детали"]::before {
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .table td[data-label="Действия"] .row-actions,
+  .table td[data-label="Действие"] .row-actions {
+    justify-content: flex-start;
+  }
+
+  .table td[data-label="Действие"] .row-actions .input {
+    flex: 1 1 150px;
+    min-width: 0;
+  }
+
   .pagination {
     flex-wrap: wrap;
   }
