@@ -1743,6 +1743,22 @@ body.modal-open {
     flex: 1 1 100%;
   }
 
+  .btn {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .table .btn {
+    max-width: none;
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+  }
+
   .spacer {
     display: none;
   }
