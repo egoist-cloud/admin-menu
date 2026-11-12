@@ -380,33 +380,86 @@ router.post(
 );
 
 router.get(
+  '/players/history',
+  asyncHandler(async (req, res) => {
+    const name = String(req.query.name || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 80);
+
+    if (!name) return res.status(400).json({ error: 'Не указано имя игрока.' });
+
+    const submissions = await prisma.submission.findMany({
+      where: { participantName: { equals: name, mode: 'insensitive' } },
+      orderBy: { createdAt: 'desc' },
+      include: { test: { select: { title: true } } },
+    });
+
+    if (submissions.length === 0) return res.status(404).json({ error: 'История не найдена.' });
+
+    const percentages = submissions.map((submission) =>
+      submission.totalQuestions > 0 ? Math.round((submission.score / submission.totalQuestions) * 100) : 0,
+    );
+
+    res.setHeader('Cache-Control', 'private, no-store');
+    return res.json({
+      name: submissions[0].participantName,
+      total: submissions.length,
+      average: Math.round(percentages.reduce((sum, value) => sum + value, 0) / percentages.length),
+      best: Math.max(...percentages),
+      lastAt: formatDateTime(submissions[0].createdAt),
+      submissions: submissions.map((submission) => ({
+        id: submission.id,
+        testTitle: submission.test.title,
+        score: submission.score,
+        totalQuestions: submission.totalQuestions,
+        percent:
+          submission.totalQuestions > 0
+            ? Math.round((submission.score / submission.totalQuestions) * 100)
+            : 0,
+        date: formatDateTime(submission.createdAt),
+      })),
+    });
+  }),
+);
+
+router.get(
   '/results',
   asyncHandler(async (req, res) => {
     const testId = parseId(req.query.testId);
+    const searchName = String(req.query.name || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 80);
     const requestedPage = Number.parseInt(req.query.page, 10);
     const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
-    const where = testId ? { testId } : {};
+    const where = {
+      ...(testId ? { testId } : {}),
+      ...(searchName ? { participantName: { contains: searchName, mode: 'insensitive' } } : {}),
+    };
 
-    const [total, submissions, tests] = await Promise.all([
-      prisma.submission.count({ where }),
+    const total = await prisma.submission.count({ where });
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const currentPage = Math.min(Math.max(1, page), totalPages);
+
+    const [submissions, tests] = await Promise.all([
       prisma.submission.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * PAGE_SIZE,
+        skip: (currentPage - 1) * PAGE_SIZE,
         take: PAGE_SIZE,
         include: { test: { select: { title: true } } },
       }),
       prisma.test.findMany({ orderBy: { title: 'asc' }, select: { id: true, title: true } }),
     ]);
 
-    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
     res.render('admin/results', {
       title: 'Результаты',
       submissions,
       tests,
       selectedTestId: testId,
-      page: Math.min(page, totalPages),
+      searchName,
+      page: currentPage,
       totalPages,
       total,
     });
@@ -417,7 +470,14 @@ router.get(
   '/results/export.csv',
   asyncHandler(async (req, res) => {
     const testId = parseId(req.query.testId);
-    const where = testId ? { testId } : {};
+    const searchName = String(req.query.name || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 80);
+    const where = {
+      ...(testId ? { testId } : {}),
+      ...(searchName ? { participantName: { contains: searchName, mode: 'insensitive' } } : {}),
+    };
 
     const submissions = await prisma.submission.findMany({
       where,

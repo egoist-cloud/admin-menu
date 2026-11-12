@@ -687,6 +687,14 @@ code {
   margin-bottom: 0.2em;
 }
 
+.page-head h2 {
+  margin-bottom: 0.2em;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
 .page-head p {
   margin-bottom: 0;
 }
@@ -799,6 +807,12 @@ code {
   border-color: rgba(245, 184, 61, 0.3);
   background: rgba(245, 184, 61, 0.1);
   color: #f5c96d;
+}
+
+.badge-bad {
+  border-color: rgba(255, 59, 48, 0.35);
+  background: rgba(255, 59, 48, 0.12);
+  color: #ff8a82;
 }
 
 .alert {
@@ -924,6 +938,11 @@ select.input {
 .filter-form .field {
   min-width: 220px;
   margin-bottom: 0;
+}
+
+.filter-form .filter-grow {
+  flex: 1;
+  min-width: 240px;
 }
 
 /* ---------- Прохождение теста ---------- */
@@ -1304,6 +1323,270 @@ select.input {
   line-height: 1;
 }
 
+/* ---------- Админ-баннер ---------- */
+
+.admin-banner {
+  position: relative;
+  margin-bottom: 24px;
+  padding: 26px 30px;
+  overflow: hidden;
+  border: 1px solid #3b2025;
+  border-radius: 16px;
+  background:
+    radial-gradient(540px 190px at 72% 0%, rgba(255, 59, 48, 0.28), transparent 66%),
+    linear-gradient(105deg, #260e11 0%, #171114 46%, #101013 100%);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
+}
+
+.admin-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 34px 34px;
+  opacity: 0.55;
+  -webkit-mask-image: radial-gradient(600px 200px at 70% 0%, #000, transparent 80%);
+  mask-image: radial-gradient(600px 200px at 70% 0%, #000, transparent 80%);
+  pointer-events: none;
+}
+
+.admin-banner-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.admin-banner h1 {
+  margin: 0 0 4px;
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  font-style: italic;
+  letter-spacing: 0.05em;
+}
+
+.admin-banner p {
+  margin: 0;
+  color: #b9a6a9;
+  font-size: 0.9rem;
+}
+
+.admin-banner-mark {
+  position: absolute;
+  right: 28px;
+  bottom: -20px;
+  color: rgba(255, 255, 255, 0.045);
+  font-size: 6rem;
+  font-weight: 900;
+  letter-spacing: -0.08em;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* ---------- История игрока ---------- */
+
+.player-link {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px dashed rgba(255, 59, 48, 0.5);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.player-link:hover {
+  color: var(--red-bright);
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+.player-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+}
+
+.player-modal[hidden] {
+  display: none;
+}
+
+.player-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.74);
+  backdrop-filter: blur(4px);
+}
+
+.player-modal-card {
+  position: relative;
+  z-index: 1;
+  width: min(780px, 100%);
+  max-height: 88vh;
+  padding: 24px;
+  overflow: auto;
+  border: 1px solid #35353e;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #18181c, #101013);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7);
+}
+
+.player-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #35353e;
+  border-radius: 50%;
+  background: #1b1b20;
+  color: var(--muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.player-modal-close:hover {
+  border-color: rgba(255, 59, 48, 0.5);
+  color: var(--text);
+}
+
+.player-modal-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding-right: 38px;
+}
+
+.player-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border: 1px solid rgba(255, 59, 48, 0.45);
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255, 59, 48, 0.25), rgba(255, 59, 48, 0.08));
+  color: #ff9b95;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.player-modal-head h2 {
+  margin: 0 0 2px;
+  font-size: 1.15rem;
+  text-transform: none;
+}
+
+.player-modal-head p {
+  margin: 0;
+}
+
+.player-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.player-stat {
+  padding: 11px 12px;
+  border: 1px solid #2b2b33;
+  border-radius: 9px;
+  background: #121215;
+}
+
+.player-stat-label {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 0.63rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.player-stat-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.player-history {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.player-history-row {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  border: 1px solid #292930;
+  border-radius: 9px;
+  background: #131316;
+  color: #e9e9ee;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.player-history-row:hover {
+  border-color: rgba(255, 59, 48, 0.55);
+  background: #19191d;
+  color: #fff;
+}
+
+.player-history-id {
+  color: var(--muted-2);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.player-history-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.player-history-title {
+  overflow: hidden;
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-history-date {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.player-history-score {
+  color: #d9d9e0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.player-empty {
+  padding: 22px;
+  border: 1px dashed #33333c;
+  border-radius: 9px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
 /* ---------- Подвал ---------- */
 
 .site-footer {
@@ -1487,5 +1770,36 @@ select.input {
 
   .q-image-preview {
     max-width: 100%;
+  }
+
+  .admin-banner {
+    padding: 20px;
+  }
+
+  .admin-banner-mark {
+    right: 14px;
+    font-size: 4rem;
+  }
+
+  .player-modal {
+    padding: 10px;
+  }
+
+  .player-modal-card {
+    max-height: 92vh;
+    padding: 18px;
+  }
+
+  .player-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .player-history-row {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .player-history-score {
+    display: none;
   }
 }

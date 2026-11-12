@@ -1,11 +1,22 @@
 <%- include('../partials/header') %>
+<%- include('../partials/admin-banner', { subtitle: 'Результаты тестов и история игроков' }) %>
+
+<%
+  const exportQuery = [
+    selectedTestId ? 'testId=' + selectedTestId : '',
+    searchName ? 'name=' + encodeURIComponent(searchName) : '',
+  ].filter(Boolean).join('&');
+  const pageQuery =
+    (selectedTestId ? '&testId=' + selectedTestId : '') +
+    (searchName ? '&name=' + encodeURIComponent(searchName) : '');
+%>
 
 <div class="page-head">
   <div>
-    <h1>Результаты</h1>
+    <h2>Результаты</h2>
     <p class="muted">Всего прохождений: <%= total %></p>
   </div>
-  <a class="btn btn-secondary" href="/admin/results/export.csv<%= selectedTestId ? '?testId=' + selectedTestId : '' %>">Экспорт в CSV</a>
+  <a class="btn btn-secondary" href="/admin/results/export.csv<%= exportQuery ? '?' + exportQuery : '' %>">Экспорт в CSV</a>
 </div>
 
 <form method="get" action="/admin/results" class="card filter-form">
@@ -18,8 +29,21 @@
       <% }) %>
     </select>
   </label>
+
+  <label class="field filter-grow">
+    <span class="field-label">Игрок</span>
+    <input
+      class="input"
+      type="search"
+      name="name"
+      value="<%= searchName %>"
+      maxlength="80"
+      placeholder="Имя участника"
+    >
+  </label>
+
   <button class="btn btn-primary" type="submit">Показать</button>
-  <% if (selectedTestId) { %>
+  <% if (selectedTestId || searchName) { %>
     <a class="btn btn-ghost" href="/admin/results">Сбросить</a>
   <% } %>
 </form>
@@ -27,7 +51,13 @@
 <% if (submissions.length === 0) { %>
   <div class="card empty">
     <p>Прохождений пока нет.</p>
-    <p class="muted small">Отправьте тест друзьям — результаты появятся здесь и придут в Telegram.</p>
+    <p class="muted small">
+      <% if (searchName) { %>
+        По имени «<%= searchName %>» ничего не найдено. Попробуйте изменить запрос.
+      <% } else { %>
+        Отправьте тест друзьям — результаты появятся здесь и придут в Telegram.
+      <% } %>
+    </p>
   </div>
 <% } else { %>
   <div class="card table-card">
@@ -45,7 +75,14 @@
         <tbody>
           <% submissions.forEach((submission) => { %>
             <tr>
-              <td data-label="Имя"><%= submission.participantName %></td>
+              <td data-label="Имя">
+                <button
+                  type="button"
+                  class="player-link"
+                  title="Показать историю игрока"
+                  data-history-url="/admin/players/history?name=<%= encodeURIComponent(submission.participantName) %>"
+                ><%= submission.participantName %></button>
+              </td>
               <td data-label="Тест"><%= submission.test.title %></td>
               <td data-label="Дата"><%= formatDateTime(submission.createdAt) %></td>
               <td data-label="Результат">
@@ -65,14 +102,15 @@
   <% if (totalPages > 1) { %>
     <nav class="pagination">
       <% if (page > 1) { %>
-        <a class="btn btn-ghost btn-sm" href="/admin/results?page=<%= page - 1 %><%= selectedTestId ? '&testId=' + selectedTestId : '' %>">← Назад</a>
+        <a class="btn btn-ghost btn-sm" href="/admin/results?page=<%= page - 1 %><%= pageQuery %>">← Назад</a>
       <% } %>
       <span class="muted small">Страница <%= page %> из <%= totalPages %></span>
       <% if (page < totalPages) { %>
-        <a class="btn btn-ghost btn-sm" href="/admin/results?page=<%= page + 1 %><%= selectedTestId ? '&testId=' + selectedTestId : '' %>">Вперёд →</a>
+        <a class="btn btn-ghost btn-sm" href="/admin/results?page=<%= page + 1 %><%= pageQuery %>">Вперёд →</a>
       <% } %>
     </nav>
   <% } %>
 <% } %>
 
+<%- include('../partials/player-modal') %>
 <%- include('../partials/footer') %>

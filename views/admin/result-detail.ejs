@@ -6,6 +6,11 @@
     <p class="muted"><%= formatDateTime(submission.createdAt) %></p>
   </div>
   <div class="row-actions">
+    <button
+      type="button"
+      class="btn btn-ghost"
+      data-history-url="/admin/players/history?name=<%= encodeURIComponent(submission.participantName) %>"
+    >История игрока</button>
     <form method="post" action="/admin/results/<%= submission.id %>/notify" class="inline-form">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <button class="btn btn-secondary" type="submit">Отправить в Telegram</button>
@@ -52,4 +57,5 @@
   </ol>
 <% } %>
 
+<%- include('../partials/player-modal') %>
 <%- include('../partials/footer') %>

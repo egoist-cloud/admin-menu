@@ -1,8 +1,9 @@
 <%- include('../partials/header') %>
+<%- include('../partials/admin-banner', { subtitle: 'Тесты, результаты и уведомления в Telegram' }) %>
 
 <div class="page-head">
   <div>
-    <h1>Тесты</h1>
+    <h2>Тесты</h2>
     <p class="muted">Всего: <%= tests.length %></p>
   </div>
   <a class="btn btn-primary" href="/admin/tests/new">Создать тест</a>
