@@ -710,8 +710,11 @@ code {
   justify-content: center;
   gap: 8px;
   padding: 10px 16px;
-  border: 1px solid transparent;
-  border-radius: 8px;
+  border: 1px solid var(--button-red);
+  border-radius: 999px;
+  background: var(--button-red);
+  box-shadow: 0 8px 22px rgba(255, 45, 45, 0.28);
+  color: var(--button-ink);
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 700;
@@ -730,75 +733,28 @@ code {
   height: 18px;
 }
 
-.btn-primary {
-  border-color: var(--button-red);
-  background: var(--button-red);
-  box-shadow: 0 8px 22px rgba(255, 45, 45, 0.28);
-  color: var(--button-ink);
-}
-
-.btn-primary:hover {
+.btn:hover {
   border-color: var(--button-red-hover);
   background: var(--button-red-hover);
   box-shadow: 0 10px 26px rgba(255, 45, 45, 0.38);
   color: var(--button-ink);
 }
 
-.btn-primary:active {
+.btn:active {
   border-color: var(--button-red-active);
   background: var(--button-red-active);
   color: var(--button-ink);
 }
 
-.btn-secondary {
-  border-color: rgba(255, 59, 48, 0.35);
-  background: rgba(255, 255, 255, 0.035);
-  color: #ff8a82;
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 59, 48, 0.18);
-  color: #ffb0ab;
-}
-
-.btn-ghost {
-  border-color: #45464b;
-  background: #2b2c30;
-  color: #e4e4e8;
-}
-
-.btn-ghost:hover {
-  border-color: #57585d;
-  background: #303136;
-  color: #fff;
-}
-
-.btn-danger {
-  border-color: rgba(255, 59, 48, 0.4);
-  background: rgba(255, 59, 48, 0.12);
-  color: #ff8a82;
-}
-
-.btn-danger:hover {
-  background: rgba(255, 59, 48, 0.2);
-  color: #ffb6b1;
-}
-
 .btn-sm {
   padding: 6px 11px;
-  border-radius: 6px;
+  border-radius: 999px;
   font-size: 0.72rem;
 }
 
 .btn-lg {
   padding: 13px 22px;
   font-size: 0.88rem;
-}
-
-.btn-primary,
-.btn-primary.btn-sm,
-.btn-primary.btn-lg {
-  border-radius: 999px;
 }
 
 .btn-block {
