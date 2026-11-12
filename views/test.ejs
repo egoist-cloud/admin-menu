@@ -33,10 +33,15 @@
         maxlength="80"
         placeholder="Например, Иван"
         autocomplete="name"
+        <%= currentUser ? 'readonly' : '' %>
         required
       >
     </label>
-    <p class="muted small">Имя нужно, чтобы администратор понял, чей это результат.</p>
+    <% if (currentUser) { %>
+      <p class="muted small">Имя берётся из Steam-профиля Confusa. Результат сохранится на этот аккаунт.</p>
+    <% } else { %>
+      <p class="muted small">Имя нужно, чтобы администратор понял, чей это результат.</p>
+    <% } %>
   </div>
 
   <% test.questions.forEach((question, index) => { %>

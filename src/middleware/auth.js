@@ -3,6 +3,7 @@
 const crypto = require('node:crypto');
 const bcrypt = require('bcryptjs');
 const config = require('../config');
+const { isStaff, ROLES } = require('../lib/roles');
 
 function safeEqual(a, b) {
   const bufferA = Buffer.from(String(a));
@@ -46,7 +47,8 @@ async function verifyCredentials(username, password) {
 }
 
 function requireAdmin(req, res, next) {
-  if (req.session && req.session.isAdmin) return next();
+  const role = req.currentRole || (req.session && req.session.isAdmin ? ROLES.OWNER : req.currentUser && req.currentUser.role);
+  if (isStaff(role)) return next();
 
   if (req.method === 'GET') {
     const target = req.originalUrl && req.originalUrl.startsWith('/admin') ? req.originalUrl : '/admin/tests';

@@ -30,12 +30,30 @@ const nodeEnv = text(process.env.NODE_ENV) || 'development';
 const isProduction = nodeEnv === 'production';
 
 const parsedPort = Number.parseInt(process.env.PORT || '3000', 10);
+const fallbackOrigin = `http://localhost:${Number.isInteger(parsedPort) && parsedPort > 0 ? parsedPort : 3000}`;
+
+function publicOrigin(value, fallback) {
+  const raw = unquote(value);
+  if (!raw) return fallback;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return fallback;
+  }
+}
+
+const publicUrl = publicOrigin(
+  process.env.APP_ORIGIN || process.env.RENDER_EXTERNAL_URL || process.env.WEBHOOK_URL,
+  fallbackOrigin,
+);
 
 const config = {
   nodeEnv,
   isProduction,
   port: Number.isInteger(parsedPort) && parsedPort > 0 ? parsedPort : 3000,
   timezone: text(process.env.TZ) || 'Europe/Moscow',
+  publicUrl,
+  confusaId: text(process.env.CONFUSA_ID) || '143144314314',
   databaseUrl: text(process.env.DATABASE_URL),
   sessionSecret: unquote(process.env.SESSION_SECRET),
   admin: {

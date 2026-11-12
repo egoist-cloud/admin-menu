@@ -79,7 +79,7 @@ router.get(
       title: test.title,
       test,
       errors: [],
-      participantName: '',
+      participantName: req.currentUser ? req.currentUser.displayName : '',
     });
   }),
 );
@@ -95,9 +95,11 @@ router.post(
     const test = await findPublishedTest(id);
     if (!test) return notFound(res);
 
-    const participantName = String(req.body.participantName || '')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const participantName = req.currentUser
+      ? req.currentUser.displayName
+      : String(req.body.participantName || '')
+          .replace(/\s+/g, ' ')
+          .trim();
     const errors = [];
 
     if (!participantName) errors.push('Введите ваше имя.');

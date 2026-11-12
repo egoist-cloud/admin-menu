@@ -1,0 +1,153 @@
+<%- include('partials/header') %>
+
+<section class="page-head">
+  <div>
+    <span class="eyebrow">Панель состава</span>
+    <h1>CONFUSA</h1>
+    <p class="muted">ID состава: <code><%= confusaId %></code></p>
+  </div>
+  <% if (currentUser) { %>
+    <span class="badge <%= currentRole === 'SENIOR_ADMIN' ? 'badge-ok' : currentRole === 'ADMIN' ? 'badge-draft' : '' %>">
+      <%= roleLabel(currentRole) %>
+    </span>
+  <% } %>
+</section>
+
+<% if (error) { %>
+  <div class="alert alert-error"><%= error %></div>
+<% } %>
+
+<% if (currentUser) { %>
+  <div class="card">
+    <div class="page-head">
+      <div>
+        <span class="eyebrow">Профиль игрока</span>
+        <h2><%= currentUser.displayName %></h2>
+        <p class="muted">SteamID: <code><%= currentUser.steamId %></code></p>
+      </div>
+    </div>
+
+    <form method="post" action="/confusa/profile" class="filter-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label class="field filter-grow">
+        <span class="field-label">Имя в составе</span>
+        <input class="input" type="text" name="displayName" value="<%= currentUser.displayName %>" minlength="2" maxlength="40" required>
+      </label>
+      <button class="btn btn-primary" type="submit">Сохранить имя</button>
+    </form>
+
+    <div class="row-actions">
+      <form method="post" action="/admin/logout" class="inline-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn btn-ghost" type="submit">Выйти из аккаунта</button>
+      </form>
+    </div>
+  </div>
+<% } else if (isAdmin) { %>
+  <div class="card">
+    <div class="page-head">
+      <div>
+        <span class="eyebrow">Владелец</span>
+        <h2><%= ownerName %></h2>
+        <p class="muted">Главный админ с полным доступом. Он может назначать старших админов.</p>
+      </div>
+      <span class="badge badge-ok">Владелец</span>
+    </div>
+  </div>
+<% } else { %>
+  <div class="card">
+    <span class="eyebrow">Steam</span>
+    <h2>Регистрация в составе</h2>
+    <p class="muted">
+      Войдите через Steam, чтобы попасть в Confusa. Steam подтвердит аккаунт,
+      а имя можно указать сразу или изменить позже.
+    </p>
+
+    <form method="get" action="/auth/steam" class="filter-form">
+      <label class="field filter-grow">
+        <span class="field-label">Имя игрока</span>
+        <input class="input" type="text" name="name" maxlength="40" placeholder="Например, s1mple">
+      </label>
+      <button class="btn btn-primary" type="submit">Войти через Steam</button>
+    </form>
+
+    <p class="muted small">Пароль от Steam не передаётся сайту: используется официальный Steam OpenID.</p>
+  </div>
+<% } %>
+
+<% if (canManageRoles) { %>
+  <div class="section-head section-head-row">
+    <div>
+      <span class="eyebrow">Управление</span>
+      <h2>Состав Confusa</h2>
+    </div>
+    <span class="muted small">Всего игроков: <%= users.length %></span>
+  </div>
+
+  <div class="card">
+    <div class="page-head">
+      <div>
+        <span class="eyebrow">Главный админ</span>
+        <h2><%= ownerName %></h2>
+        <p class="muted">Один владелец. Его права не выдаются через таблицу.</p>
+      </div>
+      <span class="badge badge-ok">Владелец</span>
+    </div>
+  </div>
+
+  <% if (users.length === 0) { %>
+    <div class="card empty">
+      <p>В составе пока нет игроков.</p>
+      <p class="muted small">Отправьте игрокам ссылку на Confusa — они зарегистрируются через Steam.</p>
+    </div>
+  <% } else { %>
+    <div class="card table-card">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Игрок</th>
+              <th>SteamID</th>
+              <th>Роль</th>
+              <th>Регистрация</th>
+              <th>Действие</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% users.forEach((user) => { %>
+              <tr>
+                <td data-label="Игрок"><strong><%= user.displayName %></strong></td>
+                <td data-label="SteamID"><code><%= user.steamId %></code></td>
+                <td data-label="Роль">
+                  <span class="badge <%= user.role === 'SENIOR_ADMIN' ? 'badge-ok' : user.role === 'ADMIN' ? 'badge-draft' : '' %>">
+                    <%= roleLabel(user.role) %>
+                  </span>
+                </td>
+                <td data-label="Регистрация"><%= formatDateTime(user.createdAt) %></td>
+                <td data-label="Действие">
+                  <% if (user.options.length > 0 && (!currentUser || currentUser.id !== user.id)) { %>
+                    <form method="post" action="/confusa/users/<%= user.id %>/role" class="row-actions">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <select class="input" name="role" aria-label="Роль игрока <%= user.displayName %>">
+                        <% user.options.forEach((optionRole) => { %>
+                          <option value="<%= optionRole %>" <%= user.role === optionRole ? 'selected' : '' %>><%= roleLabel(optionRole) %></option>
+                        <% }) %>
+                      </select>
+                      <button class="btn btn-ghost btn-sm" type="submit">Сохранить</button>
+                    </form>
+                  <% } else { %>
+                    <span class="muted small">—</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% } %>
+<% } else if (currentUser) { %>
+  <p class="muted small">Управлять ролями может владелец или старший админ.</p>
+<% } %>
+
+<%- include('partials/footer') %>

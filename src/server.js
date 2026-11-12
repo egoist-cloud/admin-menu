@@ -13,9 +13,13 @@ const { initTelegram, setupTelegramWebhook } = require('./lib/telegram');
 const { formatDateTime, formatPercent, plural } = require('./lib/format');
 const { pgConnectionString, sslConfig } = require('./lib/pg-ssl');
 const { ensureCsrfToken } = require('./middleware/csrf');
+const { loadCurrentUser } = require('./middleware/identity');
+const roles = require('./lib/roles');
 const publicRoutes = require('./routes/public');
 const adminRoutes = require('./routes/admin');
 const telegramRoutes = require('./routes/telegram');
+const authRoutes = require('./routes/auth');
+const confusaRoutes = require('./routes/confusa');
 
 assertConfig();
 
@@ -98,12 +102,20 @@ app.use(
   }),
 );
 
+app.use(loadCurrentUser);
+
 app.use((req, res, next) => {
   res.locals.appName = 'Admin Menu';
   res.locals.currentYear = new Date().getFullYear();
   res.locals.path = req.path;
-  res.locals.isAdmin = Boolean(req.session && req.session.isAdmin);
-  res.locals.csrfToken = req.session && req.session.isAdmin ? ensureCsrfToken(req) : '';
+  res.locals.currentUser = req.currentUser;
+  res.locals.currentRole = req.currentRole;
+  res.locals.roleLabel = roles.roleLabel;
+  res.locals.confusaId = config.confusaId;
+  res.locals.isAdmin = roles.isStaff(req.currentRole);
+  res.locals.canManageRoles = roles.canManageRoles(req.currentRole);
+  res.locals.csrfToken =
+    req.session && (req.session.isAdmin || req.currentUser) ? ensureCsrfToken(req) : '';
   res.locals.flash = req.session && req.session.flash ? req.session.flash : null;
   if (req.session && req.session.flash) delete req.session.flash;
   res.locals.formatDateTime = formatDateTime;
@@ -116,8 +128,7 @@ app.use((req, res, next) => {
 // Публичная отправка и вход остаются с прежним лимитом 128 КБ.
 app.use((req, res, next) => {
   const isAdminTestForm =
-    req.session &&
-    req.session.isAdmin &&
+    res.locals.isAdmin &&
     (req.path === '/admin/tests' || req.path.startsWith('/admin/tests/'));
   return (isAdminTestForm ? adminFormParser : publicFormParser)(req, res, next);
 });
@@ -133,6 +144,8 @@ app.get('/healthz', async (req, res) => {
   }
 });
 
+app.use('/auth', authRoutes);
+app.use('/confusa', confusaRoutes);
 app.use(telegramRoutes);
 app.use('/admin', adminRoutes);
 app.use(publicRoutes);
@@ -155,7 +168,12 @@ app.use((error, req, res, next) => {
   res.locals.appName = res.locals.appName || 'Admin Menu';
   res.locals.currentYear = res.locals.currentYear || new Date().getFullYear();
   res.locals.path = res.locals.path || req.path || '/';
+  res.locals.currentUser = res.locals.currentUser || null;
+  res.locals.currentRole = res.locals.currentRole || null;
+  res.locals.roleLabel = res.locals.roleLabel || roles.roleLabel;
+  res.locals.confusaId = res.locals.confusaId || config.confusaId;
   res.locals.isAdmin = Boolean(res.locals.isAdmin);
+  res.locals.canManageRoles = Boolean(res.locals.canManageRoles);
   res.locals.csrfToken = res.locals.csrfToken || '';
   res.locals.flash = res.locals.flash || null;
   res.locals.formatDateTime = res.locals.formatDateTime || formatDateTime;

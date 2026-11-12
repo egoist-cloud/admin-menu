@@ -106,7 +106,7 @@ router.use((req, res, next) => {
 });
 
 router.get('/login', (req, res) => {
-  if (req.session.isAdmin) return res.redirect('/admin/tests');
+  if (res.locals.isAdmin) return res.redirect('/admin/tests');
 
   res.render('admin/login', {
     title: 'Вход в админ-панель',
@@ -151,6 +151,7 @@ router.post(
       }
 
       req.session.isAdmin = true;
+      req.session.userId = null;
       req.session.csrfToken = crypto.randomBytes(32).toString('hex');
       req.session.flash = { type: 'success', text: 'Вы вошли в админ-панель.' };
       return res.redirect(nextTarget);

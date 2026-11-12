@@ -7,6 +7,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id          Int       @id @default(autoincrement())
+  steamId     String    @unique
+  displayName String
+  role        String    @default("PLAYER")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
+}
+
 model Test {
   id          Int          @id @default(autoincrement())
   title       String

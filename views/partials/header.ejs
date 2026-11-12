@@ -10,6 +10,11 @@
   <script src="/recover.js" defer></script>
 </head>
 <body>
+  <%
+    const userInitial = currentUser ? (currentUser.displayName || '?').trim().charAt(0).toUpperCase() : '?';
+    const topbarName = currentUser ? currentUser.displayName : (isAdmin ? 'owner' : 'гость');
+    const topbarHref = currentUser ? '/confusa' : (isAdmin ? '/admin/tests' : '/confusa');
+  %>
   <div class="app-shell">
     <aside class="sidebar">
       <a class="brand" href="/">
@@ -22,6 +27,10 @@
         <a class="side-link <%= path === '/' ? 'is-active' : '' %>" href="/">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
           <span>Тесты</span>
+        </a>
+        <a class="side-link <%= path.startsWith('/confusa') || path.startsWith('/auth/steam') ? 'is-active' : '' %>" href="/confusa">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Confusa</span>
         </a>
         <% if (isAdmin) { %>
           <a class="side-link <%= path.startsWith('/admin/tests') ? 'is-active' : '' %>" href="/admin/tests">
@@ -40,10 +49,25 @@
       </nav>
 
       <div class="sidebar-foot">
-        <% if (isAdmin) { %>
+        <% if (currentUser) { %>
+          <div class="side-user">
+            <span class="avatar"><%= userInitial %></span>
+            <span class="side-user-text">
+              <strong><%= currentUser.displayName %></strong>
+              <small><%= roleLabel(currentRole) %></small>
+            </span>
+          </div>
+          <form method="post" action="/admin/logout" class="inline-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="side-link side-logout">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+              <span>Выйти</span>
+            </button>
+          </form>
+        <% } else if (isAdmin) { %>
           <div class="side-user">
             <span class="avatar">A</span>
-            <span class="side-user-text"><strong>Администратор</strong><small>панель управления</small></span>
+            <span class="side-user-text"><strong>Администратор</strong><small>владелец · панель управления</small></span>
           </div>
           <form method="post" action="/admin/logout" class="inline-form">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -53,6 +77,10 @@
             </button>
           </form>
         <% } else { %>
+          <a class="side-link" href="/confusa">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Steam-вход</span>
+          </a>
           <a class="side-link" href="/admin/login">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
             <span>Вход для админа</span>
@@ -67,9 +95,9 @@
           <div class="topbar-title"><span class="status-dot"></span><%= title %></div>
           <div class="topbar-user">
             <span class="server-pill">ADMIN MENU</span>
-            <a class="user-chip" href="<%= isAdmin ? '/admin/tests' : '/admin/login' %>">
-              <span class="avatar"><%= isAdmin ? 'A' : 'Г' %></span>
-              <span><%= isAdmin ? 'admin' : 'гость' %></span>
+            <a class="user-chip" href="<%= topbarHref %>">
+              <span class="avatar"><%= currentUser ? userInitial : (isAdmin ? 'A' : 'Г') %></span>
+              <span><%= topbarName %></span>
             </a>
           </div>
         </div>
