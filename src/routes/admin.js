@@ -406,7 +406,7 @@ router.get(
       name: submissions[0].participantName,
       total: submissions.length,
       average: Math.round(percentages.reduce((sum, value) => sum + value, 0) / percentages.length),
-      best: Math.max(...percentages),
+      best: percentages.reduce((max, value) => Math.max(max, value), 0),
       lastAt: formatDateTime(submissions[0].createdAt),
       submissions: submissions.map((submission) => ({
         id: submission.id,

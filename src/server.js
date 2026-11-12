@@ -21,6 +21,9 @@ assertConfig();
 
 const app = express();
 
+const publicFormParser = express.urlencoded({ extended: false, limit: '128kb' });
+const adminFormParser = express.urlencoded({ extended: false, limit: '15mb' });
+
 app.set('trust proxy', 1);
 app.set('view engine', 'ejs');
 app.set('views', config.paths.views);
@@ -44,8 +47,6 @@ app.use(
   }),
 );
 
-app.use(express.urlencoded({ extended: false, limit: '15mb' }));
-app.use(express.json({ limit: '256kb' }));
 app.use(
   express.static(config.paths.public, {
     maxAge: config.isProduction ? '1h' : 0,
@@ -102,6 +103,17 @@ app.use((req, res, next) => {
   next();
 });
 
+// Большое тело нужно только форме теста с картинками и только после входа.
+// Публичная отправка и вход остаются с прежним лимитом 128 КБ.
+app.use((req, res, next) => {
+  const isAdminTestForm =
+    req.session &&
+    req.session.isAdmin &&
+    (req.path === '/admin/tests' || req.path.startsWith('/admin/tests/'));
+  return (isAdminTestForm ? adminFormParser : publicFormParser)(req, res, next);
+});
+app.use(express.json({ limit: '256kb' }));
+
 app.get('/healthz', async (req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -129,14 +141,29 @@ app.use((req, res) => {
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
   console.error('[server] ошибка:', error);
+
+  // Ошибка может произойти до установки общих locals (например, 413 от парсера).
+  res.locals.appName = res.locals.appName || 'Admin Menu';
+  res.locals.currentYear = res.locals.currentYear || new Date().getFullYear();
+  res.locals.path = res.locals.path || req.path || '/';
+  res.locals.isAdmin = Boolean(res.locals.isAdmin);
+  res.locals.csrfToken = res.locals.csrfToken || '';
+  res.locals.flash = res.locals.flash || null;
+  res.locals.formatDateTime = res.locals.formatDateTime || formatDateTime;
+  res.locals.formatPercent = res.locals.formatPercent || formatPercent;
+  res.locals.plural = res.locals.plural || plural;
+
   const status = Number.isInteger(error.status) ? error.status : 500;
+  const title = status === 413 ? 'Слишком большая форма' : 'Ошибка сервера';
   return res.status(status).render('error', {
-    title: 'Ошибка сервера',
+    title,
     status,
     message:
       status === 500
         ? 'Внутренняя ошибка сервера. Если повторяется — посмотрите логи на Render.'
-        : 'Запрос не удалось обработать.',
+        : status === 413
+          ? 'Форма слишком большая. Уменьшите количество или размер картинок и попробуйте снова.'
+          : 'Запрос не удалось обработать.',
   });
 });
 

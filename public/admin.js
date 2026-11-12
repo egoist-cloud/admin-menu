@@ -39,26 +39,57 @@
     }
   }
 
+  // Должно совпадать с MAX_IMAGE_DATA в src/lib/test-payload.js.
+  var MAX_IMAGE_LENGTH = 1200000;
+  var MAX_FILE_SIZE = 10 * 1024 * 1024;
+
   function compressImage(file) {
     return new Promise(function (resolve, reject) {
+      if (file.size > MAX_FILE_SIZE) {
+        reject(new Error('Файл больше 10 МБ. Выберите картинку поменьше.'));
+        return;
+      }
+
       var reader = new FileReader();
 
       reader.onload = function () {
         var image = new Image();
 
         image.onload = function () {
-          var maxSide = 1200;
-          var scale = Math.min(1, maxSide / Math.max(image.width, image.height));
-          var canvas = document.createElement('canvas');
-          canvas.width = Math.max(1, Math.round(image.width * scale));
-          canvas.height = Math.max(1, Math.round(image.height * scale));
+          try {
+            var maxSide = 1200;
+            var quality = 0.82;
+            var data = '';
 
-          var context = canvas.getContext('2d');
-          context.fillStyle = '#ffffff';
-          context.fillRect(0, 0, canvas.width, canvas.height);
-          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+            for (var attempt = 0; attempt < 5; attempt += 1) {
+              var scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+              var canvas = document.createElement('canvas');
+              canvas.width = Math.max(1, Math.round(image.width * scale));
+              canvas.height = Math.max(1, Math.round(image.height * scale));
 
-          resolve(canvas.toDataURL('image/jpeg', 0.82));
+              var context = canvas.getContext('2d');
+              if (!context) throw new Error('Браузер не поддерживает обработку картинок.');
+
+              context.fillStyle = '#ffffff';
+              context.fillRect(0, 0, canvas.width, canvas.height);
+              context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+              data = canvas.toDataURL('image/jpeg', quality);
+              if (data.length <= MAX_IMAGE_LENGTH) break;
+
+              maxSide = Math.round(maxSide * 0.8);
+              quality = Math.max(0.55, quality - 0.07);
+            }
+
+            if (!data || data.length > MAX_IMAGE_LENGTH) {
+              reject(new Error('Картинка слишком большая даже после сжатия. Выберите файл поменьше.'));
+              return;
+            }
+
+            resolve(data);
+          } catch (error) {
+            reject(error);
+          }
         };
 
         image.onerror = function () {
@@ -120,7 +151,7 @@
       var file = imageFile.files && imageFile.files[0];
       if (!file) return;
 
-      if (!/^image\//.test(file.type)) {
+      if (file.type && !/^image\//.test(file.type)) {
         window.alert('Выберите файл изображения: PNG, JPG, WebP или GIF.');
         imageFile.value = '';
         return;

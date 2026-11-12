@@ -1105,6 +1105,10 @@ select.input {
   width: 100%;
 }
 
+.q-image-preview-wrap[hidden] {
+  display: none;
+}
+
 .q-image-preview {
   display: block;
   width: 100%;
