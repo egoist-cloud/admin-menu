@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= title %> · QUIZRED</title>
+  <title><%= title %> · Admin Menu</title>
   <meta name="theme-color" content="#0a0a0c">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/styles.css">
@@ -12,8 +12,8 @@
   <div class="app-shell">
     <aside class="sidebar">
       <a class="brand" href="/">
-        <span class="brand-mark">Q</span>
-        <span class="brand-text">QUIZ<span>RED</span></span>
+        <span class="brand-mark">AM</span>
+        <span class="brand-text">ADMIN<span>MENU</span></span>
       </a>
 
       <div class="side-label">Меню</div>
@@ -65,7 +65,7 @@
         <div class="topbar-inner">
           <div class="topbar-title"><span class="status-dot"></span><%= title %></div>
           <div class="topbar-user">
-            <span class="server-pill">QUIZ RED</span>
+            <span class="server-pill">ADMIN MENU</span>
             <a class="user-chip" href="<%= isAdmin ? '/admin/tests' : '/admin/login' %>">
               <span class="avatar"><%= isAdmin ? 'A' : 'Г' %></span>
               <span><%= isAdmin ? 'admin' : 'гость' %></span>
