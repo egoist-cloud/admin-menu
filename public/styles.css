@@ -724,6 +724,12 @@ code {
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.btn-icon {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+}
+
 .btn-primary {
   border-color: var(--button-red);
   background: var(--button-red);
