@@ -1,87 +1,99 @@
 # Admin Menu
 
-Онлайн-тесты с админ-панелью и уведомлениями в Telegram. Один Node.js-сервис: публичный сайт, админка и бот (webhook) — всё вместе, без отдельных фронтенд- и бот-сервисов.
+Онлайн-тесты с тёмной админ-панелью в стиле CS2RED, картинками к вопросам, историей игрока и уведомлениями в Telegram. Один Node.js-сервис: публичный сайт, админка и бот (webhook) — без отдельных фронтенд- и бот-сервисов.
 
-- **Сайт:** список опубликованных тестов, ввод имени, прохождение, страница «Спасибо».
-- **Админка:** вход по логину/паролю, создание и редактирование тестов, картинка к вопросу, публикация, удаление, результаты с детализацией, история игрока по имени и экспорт в CSV.
+## Возможности
+
+- **Публичный сайт:** список опубликованных тестов, ввод имени, прохождение, страница «Спасибо».
+- **Админка:** вход по логину и паролю, создание и редактирование тестов, публикация, удаление.
+- **Картинки:** к вопросу можно прикрепить PNG, JPG, WebP или GIF. Изображение сжимается в браузере до 1200 px в JPEG, хранится в PostgreSQL и показывается участнику при прохождении.
+- **История игрока:** клик по имени в результатах открывает все прохождения этого игрока — средний и лучший результат, дату последней попытки, счёт и статус каждой попытки.
+- **Поиск:** результаты фильтруются по тесту и имени игрока; фильтр учитывается в экспорте CSV.
+- **Результаты:** детализация ответов, ручная отправка результата в Telegram.
 - **Telegram:** результат приходит в чат сразу после прохождения.
 - **База:** PostgreSQL (Aiven или Neon) через Prisma, миграции применяются автоматически при старте.
 
----
+## Оформление
 
-## Стек и почему так
+Интерфейс сделан в тёмной красно-графитовой теме:
+
+- боковое меню и верхняя панель;
+- баннер «Админ-панель» на страницах управления;
+- карточки тестов с обложками;
+- модальное окно истории игрока в стиле списка тикетов;
+- адаптивная вёрстка для телефона.
+
+Внешних шрифтов, картинок и CDN нет: все стили и иконки локальные.
+
+## Стек
 
 | Слой | Технология |
 | --- | --- |
 | Хостинг | Render Web Service (Free) |
-| База | PostgreSQL: Aiven Free (рекомендуется) или Neon (`DATABASE_URL`) |
+| База | PostgreSQL: Aiven Free или Neon (`DATABASE_URL`) |
 | Backend | Node.js 20+ / Express 5 |
 | ORM | Prisma 6 + миграции в репозитории |
 | Frontend | EJS (серверные шаблоны) + свой CSS/JS |
 | Бот | grammY, режим webhook |
-| Аутентификация | express-session + bcrypt (`bcryptjs`), один админ из env |
+| Аутентификация | express-session + bcrypt, один админ из env |
 
-**Почему EJS, а не React/Vite.** Один Web Service на Free-тарифе: серверные шаблоны отдают готовый HTML без второго контейнера, сборки фронтенда и проксирования API. Это меньше памяти (512 MB), меньше точек отказа и один шаг деплоя. React через Vite потребовал бы отдельного Static Site либо сборки в тот же сервис — для этой задачи выгоды нет.
+**Почему EJS, а не React/Vite.** Один Web Service на Free-тарифе: серверные шаблоны отдают готовый HTML без второго контейнера, сборки фронтенда и проксирования API. Это меньше памяти (512 MB), меньше точек отказа и один шаг деплоя.
 
-**Почему `bcryptjs`.** Это тот же алгоритм bcrypt (хеши `$2b$` совместимы), но без нативной компиляции при установке на Render. Меньше шансов, что сборка упадёт.
+**Почему `bcryptjs`.** Тот же алгоритм bcrypt (хеши `$2b$` совместимы), но без нативной компиляции при установке на Render.
 
-**Prisma зафиксирована на 6.19.3.** На момент сборки тег `latest` у Prisma указывает на 8.0.0-rc, поэтому версии зафиксированы явно.
-
----
+**Prisma зафиксирована на 6.19.3.** Версии зафиксированы явно, чтобы сборка не подтянула несовместимый мажор.
 
 ## Структура проекта
 
 ```
 admin-menu/
 ├── prisma/
-│   ├── schema.prisma                  # модели Test, Question, AnswerOption, Submission, SubmissionAnswer
-│   └── migrations/20260101000000_init/ # готовые SQL-миграции (+ таблица сессий)
-├── public/                            # styles.css, admin.js, test.js, ui.js, favicon.svg
-├── scripts/hash-password.js            # генератор ADMIN_PASSWORD_HASH
-├── scripts/start.js                    # проверка env → миграции → сервер
+│   ├── schema.prisma
+│   └── migrations/                  # схема, картинки вопросов, таблица сессий
+├── public/
+│   ├── styles.css                   # тёмная тема
+│   ├── admin.js                     # редактор вопросов и загрузка картинок
+│   ├── players.js                   # модальное окно истории игрока
+│   ├── test.js
+│   ├── ui.js
+│   └── favicon.svg
+├── scripts/
+│   ├── hash-password.js
+│   └── start.js                     # env → миграции → сервер
 ├── src/
-│   ├── config.js                      # чтение и проверка env
-│   ├── prisma.js                      # Prisma Client
-│   ├── server.js                      # Express, сессии, helmet, маршруты, запуск
-│   ├── lib/                           # форматирование, подсчёт, валидация формы, Telegram
-│   ├── middleware/                    # auth, csrf
-│   └── routes/                        # public, admin, telegram webhook
-├── views/                             # EJS-шаблоны (публичные + admin/)
+│   ├── config.js
+│   ├── prisma.js
+│   ├── server.js
+│   ├── lib/                         # подсчёт, валидация, Telegram
+│   ├── middleware/                  # auth, csrf
+│   └── routes/                      # public, admin, telegram
+├── views/
+│   ├── partials/                    # шапка, подвал, баннер, история игрока
+│   ├── admin/
+│   ├── index.ejs
+│   ├── test.ejs
+│   ├── thanks.ejs
+│   └── error.ejs
 ├── .env.example
-├── .gitignore
 ├── package.json
 ├── package-lock.json
 └── render.yaml
 ```
 
----
+## Быстрый старт
 
-## Шаг 0. Репозиторий
-
-Проект уже создан и запушен на GitHub. Дальнейшие изменения:
-
-1. Откройте GitHub Desktop → **File → Add local repository…** → папка `admin-menu` (если ещё не добавлена).
-2. Введите Summary → **Commit to main**.
-3. **Push origin** — Render подхватит коммит автоматически (`autoDeploy: true`).
-
-> `.gitignore` исключает `node_modules`, `.env`, логи и сборку. Секретов в репозитории нет.
-
----
-
-## Шаг 1. Локальный запуск
-
-Нужен Node.js 20 или новее (`node -v`).
+Нужен Node.js 20 или новее.
 
 ```bash
 npm ci
 cp .env.example .env
 ```
 
-Откройте `.env` и заполните минимум:
+Заполните `.env`:
 
 ```env
 DATABASE_URL="postgresql://avnadmin:ПАРОЛЬ@pg-xxx.aivencloud.com:12345/defaultdb?sslmode=require"
-SESSION_SECRET="любая-длинная-случайная-строка"
+SESSION_SECRET="длинная-случайная-строка"
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD_HASH="$2b$12$..."
 TELEGRAM_BOT_TOKEN="123456:AA..."
@@ -92,16 +104,11 @@ NODE_ENV=development
 TZ=Europe/Moscow
 ```
 
-Сгенерировать секреты и хеш пароля:
+Секреты и хеш пароля:
 
 ```bash
-# SESSION_SECRET
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-
-# TELEGRAM_WEBHOOK_SECRET (можно любую длинную строку)
 node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"
-
-# ADMIN_PASSWORD_HASH
 npm run hash -- "ваш-пароль"
 ```
 
@@ -111,14 +118,10 @@ npm run hash -- "ваш-пароль"
 npm run dev
 ```
 
-Откройте:
-
 - сайт — http://localhost:3000
 - админка — http://localhost:3000/admin/login
 
-`npm run dev` сначала выполняет `prisma migrate deploy` (создаёт таблицы в Aiven/Neon), затем запускает сервер с авто-перезагрузкой.
-
-> Локально `WEBHOOK_URL` можно оставить пустым — сайт и уведомления в Telegram будут работать, просто бот не зарегистрирует webhook (Telegram не сможет достучаться до localhost). Для локальной проверки самого webhook используйте туннель (ngrok/cloudflared) и укажите его URL.
+`npm run dev` сначала применяет миграции, затем запускает сервер с авто-перезагрузкой.
 
 ### Скрипты
 
@@ -129,173 +132,103 @@ npm run dev
 | `npm run build` | `prisma generate` |
 | `npm run db:deploy` | применить миграции вручную |
 | `npm run db:status` | статус миграций |
-| `npm run db:studio` | Prisma Studio (локальный просмотр базы) |
+| `npm run db:studio` | Prisma Studio |
 | `npm run hash -- "пароль"` | bcrypt-хеш для `ADMIN_PASSWORD_HASH` |
 
----
+## База данных
 
-## Шаг 2. База данных: Aiven (бесплатно, без карты)
+### Aiven Free
 
-Aiven Free — managed PostgreSQL: 1 ГБ диска, 1 ГБ RAM, без карты и без ограничения по времени. На free-плане сервис могут выключать после простоя — включается кнопкой **Power on** в консоли.
+1. [aiven.io](https://aiven.io) → **Sign up** (карта не нужна).
+2. **Create service** → **PostgreSQL** → план **Free** → регион ближе к Render → **Create service**.
+3. Дождитесь статуса **Running**.
+4. В **Overview** скопируйте **Service URI** — это `DATABASE_URL`.
 
-### Регистрация и создание базы (2–5 минут)
-
-1. Откройте [aiven.io](https://aiven.io) → **Sign up** (Google/GitHub/email). Карта не нужна.
-2. В Console → **Create service**.
-3. Выберите **PostgreSQL** → план **Free** → регион ближе к Render (например, `Frankfurt`) → имя `admin-menu-db` → **Create service**.
-4. Дождитесь статуса **Running** (обычно 2–5 минут).
-
-### Где взять DATABASE_URL
-
-1. Откройте сервис → вкладка **Overview**.
-2. Найдите **Service URI** → нажмите **Copy** (пароль скрыт точками — нажмите значок глаза, чтобы увидеть).
-3. Строка выглядит так:
+Строка выглядит так:
 
 ```text
-postgresql://avnadmin:ПАРОЛЬ@pg-xxxx-admin-menu-db.aivencloud.com:12345/defaultdb?sslmode=require
+postgresql://avnadmin:ПАРОЛЬ@pg-xxxx.aivencloud.com:12345/defaultdb?sslmode=require
 ```
 
-Это и есть `DATABASE_URL`. Параметр `?sslmode=require` уже есть — добавлять ничего не нужно.
+Параметр `?sslmode=require` обязателен. IP-фильтр настраивать не нужно. На free-плане Aiven может выключаться после простоя — включите **Power on** в консоли.
 
-> Aiven требует TLS. `sslmode=require` достаточно, CA-сертификат скачивать не нужно. Не включайте connection pooling — на free-плане его нет, используйте Service URI напрямую. IP-фильтр не настраивайте: по умолчанию Aiven принимает подключения с любого IP, а у Render адреса динамические. Лимит подключений на free — 20; приложение держит около 6, этого достаточно.
-
-Схема создаётся автоматически при первом запуске (`prisma migrate deploy`). Ручной SQL не нужен. Схему Prisma менять не нужно: Aiven — обычный PostgreSQL, `sslmode=require` поддерживается из коробки (и Prisma, и пулом сессий).
-
-### Если сервис выключился
-
-Free-план Aiven может уходить в сон после простоя (приходит письмо). В Console у сервиса будет статус **Powered off** → нажмите **Power on** и подождите 1–2 минуты. Приложение в это время отвечает ошибкой `P1001`.
-
-### Альтернатива: Neon
+### Neon
 
 1. [neon.tech](https://neon.tech) → **New Project** → **Connect**.
-2. **Direct connection** (хост без `-pooler`), скопируйте строку `postgresql://...?sslmode=require`.
-3. Вставьте её в `DATABASE_URL` вместо строки Aiven.
+2. Возьмите **Direct connection** (хост без `-pooler`) и строку с `?sslmode=require`.
 
-### Альтернатива: Supabase
+Схема создаётся автоматически при первом запуске (`prisma migrate deploy`).
 
-Project → Settings → Database → Connection string → URI, прямой порт `5432`, добавьте `?sslmode=require`. Пулер `6543` для миграций не подходит.
+## Telegram-бот
 
-> Встроенный Render PostgreSQL не используем: на Free он удаляется через 30 дней.
+1. [@BotFather](https://t.me/BotFather) → `/newbot`.
+2. Скопируйте токен в `TELEGRAM_BOT_TOKEN`.
+3. Напишите боту `/start` — он ответит вашим `chat_id`. Это `TELEGRAM_CHAT_ID`.
 
----
+Если результаты нужны в канале, добавьте бота администратором и укажите id канала вида `-1001234567890`.
 
-## Шаг 3. Telegram-бот
+`WEBHOOK_URL` на Render не нужен: приложение берёт `RENDER_EXTERNAL_URL` автоматически. Webhook ставится при старте на `<URL>/api/telegram/webhook` с секретным токеном.
 
-1. В Telegram откройте [@BotFather](https://t.me/BotFather) → `/newbot`.
-2. Задайте имя и username бота (username обязан заканчиваться на `bot`).
-3. BotFather пришлёт токен вида `123456789:AAH...` — это `TELEGRAM_BOT_TOKEN`.
-4. Напишите своему боту `/start` — он ответит: `Ваш chat_id: 123456789`. Это `TELEGRAM_CHAT_ID`.
+## Деплой на Render
 
-Если результаты нужны в канале:
-
-1. Добавьте бота в канал и сделайте администратором (право публиковать сообщения).
-2. Отправьте в канал любое сообщение или перешлите сообщение из канала боту [@userinfobot](https://t.me/userinfobot) / [@getidsbot](https://t.me/getidsbot) — получите id вида `-1001234567890`.
-3. Вставьте этот id в `TELEGRAM_CHAT_ID` (минус в начале обязателен).
-
-5. Придумайте `TELEGRAM_WEBHOOK_SECRET`:
-
-```bash
-node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"
-```
-
-6. `WEBHOOK_URL` задавать не обязательно: на Render приложение берёт `RENDER_EXTERNAL_URL` автоматически. Укажите его только для своего домена (без слэша на конце). При старте приложение само вызывает `setWebhook` на `<URL>/api/telegram/webhook` с секретным токеном.
-
-Проверить, что webhook установлен: откройте в браузере
-
-```text
-https://api.telegram.org/bot<ТОКЕН>/getWebhookInfo
-```
-
-Должны быть `"url": "https://.../api/telegram/webhook"` и `"last_error_message"` без ошибок. Ссылку с токеном никому не отправляйте.
-
----
-
-## Шаг 4. Деплой на Render (Blueprint)
-
-1. Запушьте проект в GitHub (GitHub Desktop → **Publish repository** / **Push origin**).
-2. Зайдите на [render.com](https://render.com) → **New → Blueprint**.
-3. Подключите GitHub и выберите репозиторий `admin-menu`. Render прочитает `render.yaml`.
-4. Render покажет сервис `admin-menu` и переменные, которые нужно заполнить вручную (`sync: false`). Вставьте:
+1. Запушьте проект в GitHub.
+2. [render.com](https://render.com) → **New → Blueprint** → выберите репозиторий.
+3. Render прочитает `render.yaml` и попросит заполнить переменные с `sync: false`.
+4. Нажмите **Apply** и дождитесь статуса **Live**.
 
 | Переменная | Значение |
 | --- | --- |
-| `DATABASE_URL` | Service URI из Aiven (или строка Neon) |
-| `ADMIN_USERNAME` | логин админа, например `admin` |
+| `DATABASE_URL` | Service URI Aiven или строка Neon |
+| `ADMIN_USERNAME` | логин админа |
 | `ADMIN_PASSWORD_HASH` | bcrypt-хеш из `npm run hash -- "пароль"` |
 | `TELEGRAM_BOT_TOKEN` | токен из BotFather |
 | `TELEGRAM_CHAT_ID` | ваш chat_id или id канала |
-`SESSION_SECRET` Render сгенерирует сам (`generateValue: true`), но только если сервис создан через Blueprint. Если сервис создавался вручную (New → Web Service), `render.yaml` не применяется — добавьте `SESSION_SECRET` в Environment вручную: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. После добавления не меняйте значение, иначе сессии админки сбросятся. `WEBHOOK_URL` и `TELEGRAM_WEBHOOK_SECRET` заполнять не нужно: первый берётся из `RENDER_EXTERNAL_URL`, второй генерируется при старте и сразу уходит в `setWebhook`. `NODE_ENV=production`, `TZ=Europe/Moscow` и `NODE_VERSION` уже прописаны в `render.yaml`.
 
-5. Нажмите **Apply** / **Create**. Первый билд: `npm ci && npm run build`, старт: `npm start` (миграции → сервер).
-6. Дождитесь статуса **Live** и откройте публичный URL.
+`SESSION_SECRET` Render сгенерирует сам при создании через Blueprint. Если сервис создавался вручную, добавьте его в **Environment**:
 
-### Вариант без Blueprint (вручную)
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
-1. **New → Web Service** → выберите репозиторий.
-2. **Runtime:** Node, **Build Command:** `npm ci && npm run build`, **Start Command:** `npm start`.
-3. **Instance Type:** Free.
-4. **Health Check Path:** `/healthz`.
-5. В **Environment** добавьте переменные из таблицы выше + `NODE_ENV=production`, `TZ=Europe/Moscow`.
-6. **Create Web Service**.
+`NODE_ENV=production`, `TZ=Europe/Moscow` и `NODE_VERSION` уже прописаны в `render.yaml`.
 
-Если сервис уже создан, а `WEBHOOK_URL` вы поменяли — достаточно **Manual Deploy → Deploy latest commit** (или рестарта), webhook переустановится при старте.
+### Если сервис создаётся вручную
 
----
+- **Runtime:** Node
+- **Build Command:** `npm ci && npm run build`
+- **Start Command:** `npm start`
+- **Instance Type:** Free
+- **Health Check Path:** `/healthz`
 
-## Шаг 5. Переменные окружения
-
-Все значения — в Render Dashboard → сервис → **Environment**. В репозитории только `.env.example` без значений.
+### Переменные окружения
 
 | Переменная | Обязательна | Назначение |
 | --- | --- | --- |
-| `DATABASE_URL` | да | Service URI Aiven или строка Neon PostgreSQL |
+| `DATABASE_URL` | да | PostgreSQL Service URI |
 | `SESSION_SECRET` | да | подпись cookie сессии, минимум 16 символов |
 | `ADMIN_USERNAME` | да | логин администратора |
-| `ADMIN_PASSWORD_HASH` | да | bcrypt-хеш пароля (`npm run hash -- "пароль"`) |
-| `TELEGRAM_BOT_TOKEN` | для бота | токен из @BotFather |
+| `ADMIN_PASSWORD_HASH` | да | bcrypt-хеш пароля |
+| `TELEGRAM_BOT_TOKEN` | для бота | токен из BotFather |
 | `TELEGRAM_CHAT_ID` | для бота | куда присылать результаты |
-| `WEBHOOK_URL` | нет | свой домен; на Render по умолчанию `RENDER_EXTERNAL_URL` |
+| `WEBHOOK_URL` | нет | свой домен; на Render берётся `RENDER_EXTERNAL_URL` |
 | `TELEGRAM_WEBHOOK_SECRET` | нет | секрет webhook; если пусто, генерируется при старте |
 | `NODE_ENV` | да | `production` на Render |
-| `PORT` | нет | Render задаёт сам; локально по умолчанию 3000 |
-| `TZ` | нет | часовой пояс дат, по умолчанию `Europe/Moscow` |
-| `ADMIN_PASSWORD` | нет | пароль в открытом виде вместо хеша — только для локальной отладки |
-
-При старте приложение печатает в лог, что настроено, а что нет, и падает с понятным сообщением, если нет `DATABASE_URL` или `SESSION_SECRET`.
-
----
-
-## Шаг 6. Миграции и первый админ
-
-**Миграции.** Уже готовы в `prisma/migrations/`. `npm start` вызывает `scripts/start.js`: он проверяет `DATABASE_URL` и `SESSION_SECRET`, применяет `prisma migrate deploy` и только потом запускает сервер. При ошибке в логе будет понятное сообщение, а не голый `P1012`. `npm run dev` тоже применяет миграции. Вручную:
-
-```bash
-npm run db:deploy     # или npx prisma migrate deploy
-npm run db:status
-```
-
-**Первый админ.** Отдельной таблицы админов нет — это сделано специально, чтобы не хранить пароль в базе и не писать скрипт инициализации. Админ задаётся переменными:
-
-1. Сгенерируйте хеш локально: `npm run hash -- "мой-пароль"`.
-2. Вставьте логин в `ADMIN_USERNAME`, хеш — в `ADMIN_PASSWORD_HASH` (Render → Environment).
-3. Перезапустите сервис (Render сделает это сам после сохранения переменных).
-4. Войдите: `https://<сервис>.onrender.com/admin/login`.
-
-Сменить пароль — сгенерировать новый хеш и заменить `ADMIN_PASSWORD_HASH`. Сессии при этом останутся, но старый пароль перестанет работать.
-
----
+| `PORT` | нет | Render задаёт сам; локально 3000 |
+| `TZ` | нет | часовой пояс, по умолчанию `Europe/Moscow` |
+| `ADMIN_PASSWORD` | нет | пароль в открытом виде вместо хеша, только для локальной отладки |
 
 ## Как пользоваться
 
 1. Войдите в админку → **Создать тест**.
 2. Введите название и описание.
-3. Добавьте вопросы: текст, варианты ответов, галочка слева от варианта — правильный ответ. Для вопроса можно включить «несколько правильных» (множественный выбор) и прикрепить картинку: она сжимается в браузере и сохраняется вместе с вопросом.
-4. **Сохранить** — черновик, **Сохранить и опубликовать** — тест появится на главной.
-5. Отправьте ссылку на сайт — человек вводит имя, отвечает, нажимает «Завершить тест».
-6. Результат: сообщение в Telegram + запись в **Результаты**. Колонка «Имя» показывает, кто прошёл тест; в детализации видны все ответы. Нажмите на имя игрока — откроется история всех его прохождений со средним и лучшим результатом. Если сообщение не дошло — откройте результат и нажмите **«Отправить в Telegram»**.
-7. **Экспорт в CSV** — файл для Excel/Google Sheets (разделитель `;`, BOM для кириллицы).
+3. Добавьте вопросы: текст, варианты ответов, галочка слева от варианта — правильный ответ. Можно включить «несколько правильных».
+4. При необходимости нажмите **«+ Картинка к вопросу»** — изображение сожмётся автоматически, появится превью, его можно убрать.
+5. **Сохранить** — черновик, **Сохранить и опубликовать** — тест появится на главной.
+6. Отправьте ссылку на сайт — человек вводит имя, отвечает и нажимает «Завершить тест».
+7. Результат приходит в Telegram и появляется в **Результатах**. Нажмите на имя игрока, чтобы открыть историю всех его прохождений.
+8. **Экспорт в CSV** — файл для Excel/Google Sheets (разделитель `;`, BOM для кириллицы). Поиск по имени учитывается в экспорте.
 
-### Полезные маршруты
+### Маршруты
 
 | Метод | Путь | Назначение |
 | --- | --- | --- |
@@ -313,57 +246,39 @@ npm run db:status
 | GET | `/admin/results` | результаты, фильтр по тесту и имени, пагинация |
 | GET | `/admin/players/history` | история прохождений игрока (JSON для модального окна) |
 | GET | `/admin/results/:id` | детализация |
-| GET | `/admin/results/export.csv` | CSV (`?testId=` — только один тест) |
-| POST | `/api/telegram/webhook` | webhook бота (секрет обязателен) |
+| GET | `/admin/results/export.csv` | CSV (`?testId=` и `?name=`) |
+| POST | `/api/telegram/webhook` | webhook бота |
 | GET | `/healthz` | health check Render |
 
----
+## Ограничения
 
-## Ограничения Render Free (учтено)
-
-- Сервис засыпает после 15 минут без трафика, первый запрос — до минуты. Это нормально, ничего в коде не «будим».
-- Нет постоянного диска: SQLite и загрузка файлов не используются, всё во внешней PostgreSQL (Aiven/Neon).
-- 512 MB RAM / 0.1 CPU: один процесс, без тяжёлых зависимостей.
-- Порт берётся из `PORT`, сервер слушает `0.0.0.0`.
-- Сессии хранятся в PostgreSQL (таблица `session`), поэтому вход в админку не сбрасывается после рестарта или сна.
-
----
-
-## Что автоматизировано
-
-- `npm start` → `scripts/start.js`: проверка `DATABASE_URL` и `SESSION_SECRET`, затем `prisma migrate deploy`, затем сервер. При отсутствии переменной — понятное сообщение вместо `P1012`.
-- `render.yaml`: Render сам создаёт Web Service, выставляет `NODE_ENV`, `TZ`, `NODE_VERSION` и генерирует `SESSION_SECRET`.
-- `WEBHOOK_URL` подставляется из `RENDER_EXTERNAL_URL`; `TELEGRAM_WEBHOOK_SECRET` генерируется при старте.
-- Telegram webhook переустанавливается при каждом запуске сервиса.
-- Таблица сессий входит в миграцию — отдельный SQL не нужен.
-
-Ручными остаются только секреты ваших аккаунтов: `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` — их нельзя хранить в репозитории.
-
----
+- **История игрока группируется по имени.** Отдельных аккаунтов участников нет, поэтому одинаковые имена разных людей попадут в одну историю, а разные написания одного человека — в разные.
+- Один администратор, задаётся в env.
+- При сохранении теста вопросы пересоздаются. Старые прохождения не ломаются: в `SubmissionAnswer` хранятся текстовые снимки вопроса и ответа (`ON DELETE SET NULL`).
+- Удаление теста удаляет и его результаты.
+- Отдельного файлового хранилища нет: картинка сжимается в браузере (до 1200 px, JPEG) и хранится в PostgreSQL как data URL. Ограничение — около 1,2 МБ на изображение.
+- Бот работает только через webhook; long polling не используется.
+- Render Free засыпает после простоя; первый запрос может занять до минуты.
 
 ## Если что-то не работает
 
 | Симптом | Что проверить |
 | --- | --- |
-| `DATABASE_URL не задан` / падение при старте | переменная добавлена в Render → Environment, значения сохранены, сервис перезапущен |
-| `P1012: Environment variable not found: DATABASE_URL` | сборка проходит, но старт падает: в Render нет `DATABASE_URL`. Dashboard → сервис → **Environment** → **Add Environment Variable** → Key `DATABASE_URL`, Value — Service URI Aiven или строка Neon → **Save** (сервис перезапустится). Если старт остался старым: **Manual Deploy → Deploy latest commit** |
-| `P1001: Can't reach database server` | строка скопирована целиком, `sslmode=require` есть, сервис Aiven включён (Running); у Neon проект не на паузе |
-| Aiven: сервис в статусе **Powered off** | free-план Aiven выключается после простоя: Console → сервис → **Power on**, подождите 1–2 минуты |
-| `SESSION_SECRET не задан` | Render → Environment → **Add Environment Variable** → `SESSION_SECRET` = 64-символьная случайная строка (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`) → **Save**. Если сервис создан не через Blueprint, `generateValue` из `render.yaml` не применяется. После добавления не меняйте значение — иначе сессии админки сбросятся |
-| `unable to verify the first certificate` / `self-signed certificate` | в `DATABASE_URL` нет `?sslmode=require`; добавьте параметр. Для managed-баз пул сессий сам отключает проверку цепочки в режиме `require` |
-| `The table ... does not exist` | не прошли миграции: `npm run db:deploy` локально или **Manual Deploy** на Render, смотрите лог билда |
-| Логин не принимается | хеш сгенерирован тем же bcrypt и вставлен целиком (`$2b$12$...`), логин совпадает с `ADMIN_USERNAME`; при `NODE_ENV=production` cookie `secure`, вход только по https |
-| «Неверный логин или пароль» | 1) В Render `ADMIN_USERNAME` = ровно тот логин, что вы вводите (регистр важен, без кавычек). 2) Перегенерируйте хеш: `npm run hash -- "пароль"` и вставьте в `ADMIN_PASSWORD_HASH` только строку, начинающуюся с `$2b$12$`. 3) **Save** и дождитесь рестарта. 4) В логах Render строка `[admin] неудачный вход: логин совпал/не совпал, пароль совпал/не совпал` покажет причину. Если заданы и хеш, и `ADMIN_PASSWORD`, используется хеш |
-| После входа снова форма логина | изменён `SESSION_SECRET` или cookie блокируется; проверьте, что открываете https-адрес Render |
-| Telegram молчит | откройте `/admin/telegram` → статус и **«Отправить тестовое сообщение»**. Текст ошибки покажет причину: `401` — неверный `TELEGRAM_BOT_TOKEN`, `400 chat not found` — неверный `TELEGRAM_CHAT_ID` или бот не запущен в этом чате, `403` — бот заблокирован. Старый результат можно отправить кнопкой на его странице |
-| `getWebhookInfo` показывает ошибку | `WEBHOOK_URL` без слэша на конце и совпадает с адресом Render; `TELEGRAM_WEBHOOK_SECRET` не менялся после установки webhook; перезапустите сервис |
-| Webhook отвечает 403 | секрет в Telegram и в env разошлись — переустановите webhook рестартом сервиса |
-| CSV «в одну колонку» | файл открыт не Excel: используйте «Данные → Из текста», разделитель `;` |
-| Холодный старт | первый запрос после сна до 60 секунд — это лимит Render Free |
+| `DATABASE_URL не задан` | переменная добавлена в Render → Environment, значения сохранены, сервис перезапущен |
+| `P1012` | в Render нет `DATABASE_URL`; добавьте и сделайте **Manual Deploy → Deploy latest commit** |
+| `P1001: Can't reach database server` | строка скопирована целиком, есть `sslmode=require`, Aiven не на паузе |
+| Aiven **Powered off** | Console → сервис → **Power on**, подождите 1–2 минуты |
+| `SESSION_SECRET не задан` | добавьте 64-символьную случайную строку в Environment |
+| `unable to verify the first certificate` | в `DATABASE_URL` нет `?sslmode=require` |
+| `The table ... does not exist` | не прошли миграции: `npm run db:deploy` или Manual Deploy |
+| Логин не принимается | `ADMIN_USERNAME` совпадает, хеш вставлен целиком (`$2b$12$...`), сервис перезапущен |
+| После входа снова форма логина | не менялся `SESSION_SECRET`; открывайте https-адрес Render |
+| Telegram молчит | `/admin/telegram` → статус и тестовая отправка; `401` — токен, `400 chat not found` — chat_id, `403` — бот заблокирован |
+| Webhook отвечает 403 | секрет в Telegram и env разошлись — перезапустите сервис |
+| `404 x-render-routing: no-server` | сервис на Render не запущен/удалён или открыт не тот URL; проверьте Dashboard |
+| CSV в одну колонку | в Excel используйте «Данные → Из текста», разделитель `;` |
 
 Логи: Render Dashboard → сервис → **Logs**. При старте видно окружение, состояние бота и установку webhook.
-
----
 
 ## Безопасность
 
@@ -371,31 +286,16 @@ npm run db:status
 - Сессии: httpOnly, `sameSite=lax`, `secure` на https, хранение в PostgreSQL, 12 часов.
 - CSRF-токены на всех формах админки, проверка Origin для публичной отправки.
 - Rate limit: вход (20 попыток / 15 мин), отправка теста (40 / 10 мин на IP).
-- Helmet + строгий CSP (только свои скрипты и стили).
-- Telegram webhook защищён `secret_token`, эндпоинт без настроенного секрета отвечает 503.
+- Helmet + строгий CSP: свои скрипты и стили, изображения `self` и `data:`.
+- Telegram webhook защищён `secret_token`.
+- Картинки вопросов проверяются на сервере: допустимы только data URL с PNG/JPG/WebP/GIF и ограничением размера.
 - В репозитории нет ключей и `.env`; `.env.example` содержит только имена переменных.
 - HTML экранируется EJS, сообщения в Telegram — через HTML-escape.
 
----
+## Проверки
 
-## Ограничения реализации
-
-- Один администратор, задаётся в env (по требованию).
-- При сохранении теста вопросы пересоздаются. Старые прохождения не ломаются: в `SubmissionAnswer` хранятся текстовые снимки вопроса и выбранного ответа (`ON DELETE SET NULL`).
-- Удаление теста удаляет и его результаты — в админке есть подтверждение.
-- Отдельного файлового хранилища нет: картинка вопроса сжимается в браузере (до 1200 px, JPEG) и хранится в PostgreSQL как data URL. Ограничение — около 1,2 МБ на изображение.
-- Бот работает только через webhook; long polling не используется.
-
----
-
-## Чек-лист готовности
-
-- [x] Все файлы проекта в репозитории, без заглушек и TODO.
-- [x] `npm ci && npm run dev` поднимает сайт и админку.
-- [x] `render.yaml` описывает Web Service с билдом, стартом и health check.
-- [x] Prisma-схема и миграции готовы, применяются автоматически.
-- [x] Публичная часть: список тестов, имя, вопросы (одиночный и множественный выбор), «Спасибо».
-- [x] Админка: вход, создание/редактирование/публикация/удаление, результаты, детализация, CSV.
-- [x] Telegram: webhook с секретом, автоустановка при старте, сообщение с результатом.
-- [x] Переменные окружения описаны в `.env.example` и README.
-- [x] Секретов в репозитории нет.
+- `npm run build` — Prisma Client генерируется.
+- `npm run db:status` — состояние миграций.
+- Публичная часть: список тестов, имя, вопросы, картинки, «Спасибо».
+- Админка: вход, создание/редактирование/публикация/удаление, результаты, история игрока, CSV.
+- Telegram: webhook с секретом, автоустановка при старте, сообщение с результатом.

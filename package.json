@@ -2,7 +2,7 @@
   "name": "admin-menu",
   "version": "1.0.0",
   "private": true,
-  "description": "Онлайн-тесты: публичный сайт, админ-панель и Telegram-бот в одном Web Service",
+  "description": "Онлайн-тесты с тёмной админ-панелью, картинками к вопросам, историей игрока и Telegram-ботом в одном Web Service",
   "main": "src/server.js",
   "engines": {
     "node": ">=20.0.0"
