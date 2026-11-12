@@ -54,6 +54,15 @@ app.use(
   }),
 );
 
+// HTML не кэшируем: после деплоя Render браузер не должен показывать старую
+// или оборванную страницу. История игрока отдаёт свой no-store в маршруте.
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/admin/players/history')) {
+    res.setHeader('Cache-Control', 'no-store');
+  }
+  next();
+});
+
 const pool = new Pool({
   connectionString: pgConnectionString(config.databaseUrl),
   max: 3,
