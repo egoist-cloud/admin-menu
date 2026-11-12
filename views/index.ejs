@@ -7,9 +7,9 @@
 
 <section class="hero">
   <div class="hero-copy">
-    <span class="eyebrow">Онлайн-тесты</span>
-    <h1>Проверь <em>себя</em></h1>
-    <p>Выберите тест, введите имя и ответьте на вопросы. Результат сразу увидит администратор.</p>
+    <span class="eyebrow">Для участников</span>
+    <h1>Готовность <em>игроков</em></h1>
+    <p>Тесты для проверки готовности определённых игроков. Введите имя и ответьте на вопросы — результат увидит администратор.</p>
   </div>
   <div class="hero-stats">
     <div class="hero-stat">
@@ -29,10 +29,10 @@
 
 <div class="section-head section-head-row">
   <div>
-    <span class="eyebrow">Каталог</span>
-    <h2>Доступные тесты</h2>
+    <span class="eyebrow">Тесты</span>
+    <h2>Тесты для игроков</h2>
   </div>
-  <span class="muted small">Выберите тему и начните</span>
+  <span class="muted small">Доступно участникам</span>
 </div>
 
 <% if (tests.length === 0) { %>
@@ -53,7 +53,7 @@
         </div>
         <div class="test-card-body">
           <h2><%= test.title %></h2>
-          <p><%= test.description || 'Проверьте свои знания и узнайте результат сразу после прохождения.' %></p>
+          <p><%= test.description || 'Проверьте готовность и узнайте результат сразу после прохождения.' %></p>
           <div class="test-card-foot">
             <span class="muted small">Прохождений: <%= test._count.submissions %></span>
             <a class="btn btn-primary btn-sm" href="/tests/<%= test.id %>">Пройти</a>

@@ -58,7 +58,7 @@ app.get('/', (req, res) => {
   res.render(
     'index',
     baseLocals(req, {
-      title: 'Онлайн-тесты',
+      title: 'Проверка готовности',
       tests: TESTS,
       flash: {
         type: 'success',

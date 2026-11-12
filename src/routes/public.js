@@ -59,7 +59,7 @@ router.get(
       include: { _count: { select: { questions: true, submissions: true } } },
     });
 
-    res.render('index', { title: 'Онлайн-тесты', tests });
+    res.render('index', { title: 'Проверка готовности', tests });
   }),
 );
 
