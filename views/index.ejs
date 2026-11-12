@@ -8,8 +8,8 @@
 <section class="hero">
   <div class="hero-copy">
     <span class="eyebrow">Для участников</span>
-    <h1>Готовность <em>игроков</em></h1>
-    <p>Тесты для проверки готовности определённых игроков. Введите имя и ответьте на вопросы — результат увидит администратор.</p>
+    <h1>Готовность <em>модераторов</em></h1>
+    <p>Проверка готовности модераторов и администрации. Вопросы создаёт админ, а проходить тесты могут только роли с доступом.</p>
   </div>
   <div class="hero-stats">
     <div class="hero-stat">
@@ -30,12 +30,17 @@
 <div class="section-head section-head-row">
   <div>
     <span class="eyebrow">Тесты</span>
-    <h2>Тесты для игроков</h2>
+    <h2>Тесты для модераторов</h2>
   </div>
-  <span class="muted small">Доступно участникам</span>
+  <span class="muted small">Модераторы и администрация</span>
 </div>
 
-<% if (tests.length === 0) { %>
+<% if (!canTakeTests) { %>
+  <div class="card empty">
+    <p>Тесты доступны только модераторам и администрации.</p>
+    <p class="muted small">Попросите ст. админа выдать роль «Модератор» в <a href="/confusa">Confusa</a>.</p>
+  </div>
+<% } else if (tests.length === 0) { %>
   <div class="card empty">
     <p>Пока нет опубликованных тестов.</p>
     <p class="muted small">Администратор может создать тест в <a href="/admin/login">админ-панели</a>.</p>

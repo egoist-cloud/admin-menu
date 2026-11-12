@@ -808,6 +808,12 @@ code {
   color: #f5c96d;
 }
 
+.badge-moderator {
+  border-color: rgba(148, 163, 184, 0.32);
+  background: rgba(148, 163, 184, 0.12);
+  color: #cbd5e1;
+}
+
 .badge-bad {
   border-color: rgba(255, 59, 48, 0.35);
   background: rgba(255, 59, 48, 0.12);

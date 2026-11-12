@@ -4,16 +4,18 @@ const ROLES = {
   OWNER: 'OWNER',
   SENIOR_ADMIN: 'SENIOR_ADMIN',
   ADMIN: 'ADMIN',
+  MODERATOR: 'MODERATOR',
   PLAYER: 'PLAYER',
 };
 
-const ASSIGNABLE_ROLES = [ROLES.SENIOR_ADMIN, ROLES.ADMIN, ROLES.PLAYER];
+const ASSIGNABLE_ROLES = [ROLES.SENIOR_ADMIN, ROLES.ADMIN, ROLES.MODERATOR, ROLES.PLAYER];
 const STAFF_ROLES = new Set([ROLES.OWNER, ROLES.SENIOR_ADMIN, ROLES.ADMIN]);
 
 const LABELS = {
   [ROLES.OWNER]: 'Владелец',
   [ROLES.SENIOR_ADMIN]: 'Ст. админ',
   [ROLES.ADMIN]: 'Админ',
+  [ROLES.MODERATOR]: 'Модератор',
   [ROLES.PLAYER]: 'Игрок',
 };
 
@@ -25,11 +27,15 @@ function canManageRoles(role) {
   return role === ROLES.OWNER || role === ROLES.SENIOR_ADMIN;
 }
 
+function canTakeTests(role) {
+  return isStaff(role) || role === ROLES.MODERATOR;
+}
+
 function assignableRoles(actorRole, targetRole) {
   if (actorRole === ROLES.OWNER) return ASSIGNABLE_ROLES.slice();
   if (actorRole !== ROLES.SENIOR_ADMIN) return [];
   if (targetRole === ROLES.OWNER || targetRole === ROLES.SENIOR_ADMIN) return [];
-  return [ROLES.ADMIN, ROLES.PLAYER];
+  return [ROLES.ADMIN, ROLES.MODERATOR, ROLES.PLAYER];
 }
 
 function canAssignRole(actorRole, targetRole, nextRole) {
@@ -46,6 +52,7 @@ module.exports = {
   ASSIGNABLE_ROLES,
   isStaff,
   canManageRoles,
+  canTakeTests,
   assignableRoles,
   canAssignRole,
   roleLabel,

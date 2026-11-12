@@ -114,6 +114,7 @@ app.use((req, res, next) => {
   res.locals.confusaId = config.confusaId;
   res.locals.isAdmin = roles.isStaff(req.currentRole);
   res.locals.canManageRoles = roles.canManageRoles(req.currentRole);
+  res.locals.canTakeTests = roles.canTakeTests(req.currentRole);
   res.locals.csrfToken =
     req.session && (req.session.isAdmin || req.currentUser) ? ensureCsrfToken(req) : '';
   res.locals.flash = req.session && req.session.flash ? req.session.flash : null;
@@ -174,6 +175,7 @@ app.use((error, req, res, next) => {
   res.locals.confusaId = res.locals.confusaId || config.confusaId;
   res.locals.isAdmin = Boolean(res.locals.isAdmin);
   res.locals.canManageRoles = Boolean(res.locals.canManageRoles);
+  res.locals.canTakeTests = Boolean(res.locals.canTakeTests);
   res.locals.csrfToken = res.locals.csrfToken || '';
   res.locals.flash = res.locals.flash || null;
   res.locals.formatDateTime = res.locals.formatDateTime || formatDateTime;

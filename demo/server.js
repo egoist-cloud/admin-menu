@@ -4,6 +4,7 @@ const express = require('express');
 const nodePath = require('node:path');
 
 const { formatDateTime, formatPercent, plural } = require('../src/lib/format');
+const roles = require('../src/lib/roles');
 const { TESTS, SUBMISSIONS } = require('./data');
 
 const app = express();
@@ -21,6 +22,12 @@ function baseLocals(req, extra = {}) {
   return {
     path: req.path,
     isAdmin: true,
+    currentUser: null,
+    currentRole: 'OWNER',
+    roleLabel: roles.roleLabel,
+    canManageRoles: true,
+    canTakeTests: true,
+    confusaId: '143144314314',
     csrfToken: 'demo-csrf-token',
     currentYear: new Date().getFullYear(),
     flash: null,

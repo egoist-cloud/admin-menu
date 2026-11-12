@@ -8,6 +8,7 @@ const { asyncHandler } = require('../lib/async-handler');
 const { evaluateSubmission } = require('../lib/scoring');
 const { notifyNewSubmission } = require('../lib/telegram');
 const { sameOriginOnly } = require('../middleware/csrf');
+const roles = require('../lib/roles');
 
 const router = express.Router();
 
@@ -50,22 +51,35 @@ function notFound(res, message) {
   });
 }
 
+function testsForbidden(res) {
+  return res.status(403).render('error', {
+    title: 'Тесты недоступны',
+    status: 403,
+    message: 'Проходить тесты могут только модераторы и администрация.',
+  });
+}
+
 router.get(
   '/',
   asyncHandler(async (req, res) => {
-    const tests = await prisma.test.findMany({
-      where: { isPublished: true },
-      orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { questions: true, submissions: true } } },
-    });
+    const allowed = roles.canTakeTests(req.currentRole);
+    const tests = allowed
+      ? await prisma.test.findMany({
+          where: { isPublished: true },
+          orderBy: { createdAt: 'desc' },
+          include: { _count: { select: { questions: true, submissions: true } } },
+        })
+      : [];
 
-    res.render('index', { title: 'Проверка готовности', tests });
+    res.render('index', { title: 'Проверка готовности', tests, canTakeTests: allowed });
   }),
 );
 
 router.get(
   '/tests/:id',
   asyncHandler(async (req, res) => {
+    if (!roles.canTakeTests(req.currentRole)) return testsForbidden(res);
+
     const id = parseId(req.params.id);
     if (!id) return notFound(res);
 
@@ -89,6 +103,8 @@ router.post(
   submitLimiter,
   sameOriginOnly,
   asyncHandler(async (req, res) => {
+    if (!roles.canTakeTests(req.currentRole)) return testsForbidden(res);
+
     const id = parseId(req.params.id);
     if (!id) return notFound(res);
 

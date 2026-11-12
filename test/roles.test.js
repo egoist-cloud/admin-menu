@@ -7,6 +7,7 @@ const {
   ROLES,
   isStaff,
   canManageRoles,
+  canTakeTests,
   assignableRoles,
   canAssignRole,
   roleLabel,
@@ -16,6 +17,7 @@ test('владелец, старшие админы и админы считаю
   assert.equal(isStaff(ROLES.OWNER), true);
   assert.equal(isStaff(ROLES.SENIOR_ADMIN), true);
   assert.equal(isStaff(ROLES.ADMIN), true);
+  assert.equal(isStaff(ROLES.MODERATOR), false);
   assert.equal(isStaff(ROLES.PLAYER), false);
   assert.equal(isStaff(null), false);
 });
@@ -24,40 +26,55 @@ test('управлять ролями могут только владелец �
   assert.equal(canManageRoles(ROLES.OWNER), true);
   assert.equal(canManageRoles(ROLES.SENIOR_ADMIN), true);
   assert.equal(canManageRoles(ROLES.ADMIN), false);
+  assert.equal(canManageRoles(ROLES.MODERATOR), false);
   assert.equal(canManageRoles(ROLES.PLAYER), false);
 });
 
-test('владелец может выдать старшего админа, админа и игрока', () => {
+test('владелец может выдать старшего админа, админа, модератора и игрока', () => {
   assert.deepEqual(assignableRoles(ROLES.OWNER, ROLES.PLAYER), [
     ROLES.SENIOR_ADMIN,
     ROLES.ADMIN,
+    ROLES.MODERATOR,
     ROLES.PLAYER,
   ]);
   assert.equal(canAssignRole(ROLES.OWNER, ROLES.PLAYER, ROLES.SENIOR_ADMIN), true);
-  assert.equal(canAssignRole(ROLES.OWNER, ROLES.SENIOR_ADMIN, ROLES.ADMIN), true);
+  assert.equal(canAssignRole(ROLES.OWNER, ROLES.SENIOR_ADMIN, ROLES.MODERATOR), true);
 });
 
-test('старший админ может выдавать только админа и игрока', () => {
+test('старший админ может выдавать админа, модератора и игрока', () => {
   assert.deepEqual(assignableRoles(ROLES.SENIOR_ADMIN, ROLES.PLAYER), [
     ROLES.ADMIN,
+    ROLES.MODERATOR,
     ROLES.PLAYER,
   ]);
   assert.equal(canAssignRole(ROLES.SENIOR_ADMIN, ROLES.PLAYER, ROLES.ADMIN), true);
+  assert.equal(canAssignRole(ROLES.SENIOR_ADMIN, ROLES.PLAYER, ROLES.MODERATOR), true);
   assert.equal(canAssignRole(ROLES.SENIOR_ADMIN, ROLES.PLAYER, ROLES.PLAYER), true);
   assert.equal(canAssignRole(ROLES.SENIOR_ADMIN, ROLES.PLAYER, ROLES.SENIOR_ADMIN), false);
   assert.equal(canAssignRole(ROLES.SENIOR_ADMIN, ROLES.SENIOR_ADMIN, ROLES.PLAYER), false);
 });
 
-test('роль владельца нельзя выдать через панель, а обычный админ не управляет ролями', () => {
+test('роль владельца нельзя выдать через панель, а обычный админ и модератор не управляют ролями', () => {
   assert.equal(canAssignRole(ROLES.OWNER, ROLES.PLAYER, ROLES.OWNER), false);
   assert.equal(canAssignRole(ROLES.ADMIN, ROLES.PLAYER, ROLES.ADMIN), false);
   assert.deepEqual(assignableRoles(ROLES.ADMIN, ROLES.PLAYER), []);
+  assert.deepEqual(assignableRoles(ROLES.MODERATOR, ROLES.PLAYER), []);
+});
+
+test('тесты доступны модераторам и администрации, но не игрокам', () => {
+  assert.equal(canTakeTests(ROLES.OWNER), true);
+  assert.equal(canTakeTests(ROLES.SENIOR_ADMIN), true);
+  assert.equal(canTakeTests(ROLES.ADMIN), true);
+  assert.equal(canTakeTests(ROLES.MODERATOR), true);
+  assert.equal(canTakeTests(ROLES.PLAYER), false);
+  assert.equal(canTakeTests(null), false);
 });
 
 test('названия ролей совпадают с интерфейсом', () => {
   assert.equal(roleLabel(ROLES.OWNER), 'Владелец');
   assert.equal(roleLabel(ROLES.SENIOR_ADMIN), 'Ст. админ');
   assert.equal(roleLabel(ROLES.ADMIN), 'Админ');
+  assert.equal(roleLabel(ROLES.MODERATOR), 'Модератор');
   assert.equal(roleLabel(ROLES.PLAYER), 'Игрок');
   assert.equal(roleLabel('UNKNOWN'), 'Игрок');
 });
