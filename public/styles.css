@@ -1661,99 +1661,6 @@ body.modal-open {
   .main .container {
     padding: 24px 18px 36px;
   }
-}
-
-@media (max-width: 760px) {
-  .hero {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 28px 22px;
-  }
-
-  .hero-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .hero-stat {
-    min-width: 0;
-    padding: 11px 8px;
-  }
-
-  .hero-stat strong {
-    font-size: 1.2rem;
-  }
-
-  .topbar-title {
-    font-size: 0.7rem;
-  }
-
-  .server-pill {
-    display: none;
-  }
-}
-
-@media (max-width: 640px) {
-  .container {
-    padding: 0 14px;
-  }
-
-  .main {
-    padding-top: 20px;
-  }
-
-  h1 {
-    font-size: 1.55rem;
-  }
-
-  .hero h1 {
-    font-size: 2.1rem;
-  }
-
-  .card {
-    padding: 18px;
-  }
-
-  .sidebar {
-    padding: 9px 10px;
-  }
-
-  .brand-text {
-    display: none;
-  }
-
-  .side-link {
-    padding: 7px 8px;
-  }
-
-  .side-link svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .test-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .form-actions {
-    justify-content: stretch;
-  }
-
-  .form-actions .btn {
-    flex: 1 1 100%;
-  }
-
-  .btn {
-    max-width: 100%;
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-
-  .table .btn {
-    max-width: none;
-    white-space: nowrap;
-    overflow-wrap: normal;
-  }
 
   .table-card {
     overflow: visible;
@@ -1873,6 +1780,99 @@ body.modal-open {
 
   .pagination {
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 28px 22px;
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .hero-stat {
+    min-width: 0;
+    padding: 11px 8px;
+  }
+
+  .hero-stat strong {
+    font-size: 1.2rem;
+  }
+
+  .topbar-title {
+    font-size: 0.7rem;
+  }
+
+  .server-pill {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0 14px;
+  }
+
+  .main {
+    padding-top: 20px;
+  }
+
+  h1 {
+    font-size: 1.55rem;
+  }
+
+  .hero h1 {
+    font-size: 2.1rem;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .sidebar {
+    padding: 9px 10px;
+  }
+
+  .brand-text {
+    display: none;
+  }
+
+  .side-link {
+    padding: 7px 8px;
+  }
+
+  .side-link svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .test-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .form-actions .btn {
+    flex: 1 1 100%;
+  }
+
+  .btn {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .table .btn {
+    max-width: none;
+    white-space: nowrap;
+    overflow-wrap: normal;
   }
 
   .spacer {
