@@ -13,6 +13,10 @@
   --red-bright: #ff5a4f;
   --red-dark: #c6241c;
   --red-soft: rgba(255, 59, 48, 0.12);
+  --button-red: #ff2d2d;
+  --button-red-hover: #ff4747;
+  --button-red-active: #e82727;
+  --button-ink: #100d0d;
   --green: #43d17a;
   --yellow: #f5b83d;
   --radius: 14px;
@@ -721,16 +725,23 @@ code {
 }
 
 .btn-primary {
-  border-color: #ff6a60;
-  background: linear-gradient(180deg, #ff4a3f, #d92a20);
-  box-shadow: 0 8px 20px rgba(255, 59, 48, 0.22);
-  color: #fff;
+  border-color: var(--button-red);
+  background: var(--button-red);
+  box-shadow: 0 8px 22px rgba(255, 45, 45, 0.28);
+  color: var(--button-ink);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(180deg, #ff6258, #ef3429);
-  box-shadow: 0 10px 26px rgba(255, 59, 48, 0.35);
-  color: #fff;
+  border-color: var(--button-red-hover);
+  background: var(--button-red-hover);
+  box-shadow: 0 10px 26px rgba(255, 45, 45, 0.38);
+  color: var(--button-ink);
+}
+
+.btn-primary:active {
+  border-color: var(--button-red-active);
+  background: var(--button-red-active);
+  color: var(--button-ink);
 }
 
 .btn-secondary {
@@ -776,6 +787,12 @@ code {
 .btn-lg {
   padding: 13px 22px;
   font-size: 0.88rem;
+}
+
+.btn-primary,
+.btn-primary.btn-sm,
+.btn-primary.btn-lg {
+  border-radius: 999px;
 }
 
 .btn-block {
