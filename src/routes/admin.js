@@ -64,6 +64,7 @@ function renderTestForm(res, { test, form, errors, status = 200 }) {
 function toFormQuestions(test) {
   return test.questions.map((question) => ({
     text: question.text,
+    image: question.imageData || null,
     multiple: question.multiple,
     options: question.options.map((option) => ({ text: option.text, isCorrect: option.isCorrect })),
   }));
@@ -84,6 +85,7 @@ function loadTestWithQuestions(id) {
 function questionCreateData(questions) {
   return questions.map((question, index) => ({
     text: question.text,
+    imageData: question.image,
     multiple: question.multiple,
     position: index,
     options: {
@@ -271,6 +273,7 @@ router.post(
           data: {
             testId: id,
             text: question.text,
+            imageData: question.image,
             multiple: question.multiple,
             position: index,
             options: {

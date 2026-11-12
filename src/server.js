@@ -44,7 +44,7 @@ app.use(
   }),
 );
 
-app.use(express.urlencoded({ extended: false, limit: '128kb' }));
+app.use(express.urlencoded({ extended: false, limit: '15mb' }));
 app.use(express.json({ limit: '256kb' }));
 app.use(
   express.static(config.paths.public, {

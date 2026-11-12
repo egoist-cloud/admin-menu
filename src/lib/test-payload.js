@@ -6,9 +6,28 @@ const MAX_QUESTION_TEXT = 1000;
 const MAX_OPTION_TEXT = 500;
 const MAX_QUESTIONS = 100;
 const MAX_OPTIONS = 12;
+const MAX_IMAGE_DATA = 1_200_000;
+const IMAGE_DATA_RE = /^data:image\/(?:png|jpe?g|webp|gif);base64,[a-z0-9+/=\s]+$/i;
 
 function clean(value) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function parseImage(value, number, errors) {
+  const image = clean(value);
+  if (!image) return null;
+
+  if (!IMAGE_DATA_RE.test(image)) {
+    errors.push(`Вопрос ${number}: картинка должна быть в формате PNG, JPG, WebP или GIF.`);
+    return null;
+  }
+
+  if (image.length > MAX_IMAGE_DATA) {
+    errors.push(`Вопрос ${number}: картинка слишком большая, выберите файл поменьше.`);
+    return null;
+  }
+
+  return image;
 }
 
 /**
@@ -45,6 +64,7 @@ function parseTestForm(body) {
   rawQuestions.slice(0, MAX_QUESTIONS).forEach((rawQuestion, index) => {
     const number = index + 1;
     const text = clean(rawQuestion && rawQuestion.text);
+    const image = parseImage(rawQuestion && rawQuestion.image, number, errors);
     const multiple = Boolean(rawQuestion && rawQuestion.multiple);
     const rawOptions = Array.isArray(rawQuestion && rawQuestion.options) ? rawQuestion.options : [];
 
@@ -71,10 +91,10 @@ function parseTestForm(body) {
       errors.push(`Вопрос ${number}: для одиночного выбора можно отметить только один правильный ответ.`);
     }
 
-    questions.push({ text, multiple, options });
+    questions.push({ text, image, multiple, options });
   });
 
   return { title, description, questions, errors };
 }
 
-module.exports = { parseTestForm, MAX_TITLE, MAX_DESCRIPTION, MAX_QUESTIONS, MAX_OPTIONS };
+module.exports = { parseTestForm, MAX_TITLE, MAX_DESCRIPTION, MAX_QUESTIONS, MAX_OPTIONS, MAX_IMAGE_DATA };

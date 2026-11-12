@@ -9,6 +9,7 @@
   var initialField = document.getElementById('initial-questions');
   var hiddenField = document.getElementById('questions-json');
   var emptyHint = document.getElementById('questions-empty');
+  var pendingImages = 0;
 
   function updateNumbers() {
     var nodes = list.querySelectorAll('.question-editor');
@@ -16,6 +17,63 @@
       nodes[i].querySelector('.q-index').textContent = String(i + 1);
     }
     if (emptyHint) emptyHint.hidden = nodes.length > 0;
+  }
+
+  function updateBusyState() {
+    form.classList.toggle('is-busy', pendingImages > 0);
+  }
+
+  function setQuestionImage(node, data) {
+    var field = node.querySelector('.q-image');
+    var wrap = node.querySelector('.q-image-preview-wrap');
+    var preview = node.querySelector('.q-image-preview');
+
+    field.value = data || '';
+
+    if (data) {
+      preview.src = data;
+      wrap.hidden = false;
+    } else {
+      preview.removeAttribute('src');
+      wrap.hidden = true;
+    }
+  }
+
+  function compressImage(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+
+      reader.onload = function () {
+        var image = new Image();
+
+        image.onload = function () {
+          var maxSide = 1200;
+          var scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(image.width * scale));
+          canvas.height = Math.max(1, Math.round(image.height * scale));
+
+          var context = canvas.getContext('2d');
+          context.fillStyle = '#ffffff';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+          resolve(canvas.toDataURL('image/jpeg', 0.82));
+        };
+
+        image.onerror = function () {
+          reject(new Error('Не удалось прочитать изображение.'));
+        };
+
+        image.src = reader.result;
+      };
+
+      reader.onerror = function () {
+        reject(new Error('Не удалось прочитать файл.'));
+      };
+
+      reader.readAsDataURL(file);
+    });
   }
 
   function createOptionRow(option) {
@@ -55,6 +113,40 @@
   function bindQuestion(node) {
     var multiple = node.querySelector('.q-multiple');
     var options = node.querySelector('.options');
+    var imageFile = node.querySelector('.q-image-file');
+    var imageRemove = node.querySelector('.q-image-remove');
+
+    imageFile.addEventListener('change', function () {
+      var file = imageFile.files && imageFile.files[0];
+      if (!file) return;
+
+      if (!/^image\//.test(file.type)) {
+        window.alert('Выберите файл изображения: PNG, JPG, WebP или GIF.');
+        imageFile.value = '';
+        return;
+      }
+
+      pendingImages += 1;
+      updateBusyState();
+
+      compressImage(file)
+        .then(function (data) {
+          setQuestionImage(node, data);
+        })
+        .catch(function (error) {
+          window.alert(error && error.message ? error.message : 'Не удалось обработать картинку.');
+        })
+        .then(function () {
+          pendingImages -= 1;
+          updateBusyState();
+          imageFile.value = '';
+        });
+    });
+
+    imageRemove.addEventListener('click', function () {
+      setQuestionImage(node, null);
+      imageFile.value = '';
+    });
 
     node.querySelector('.opt-add').addEventListener('click', function () {
       options.appendChild(createOptionRow({}));
@@ -95,6 +187,7 @@
     var node = template.content.firstElementChild.cloneNode(true);
     node.querySelector('.q-text').value = question && question.text ? question.text : '';
     node.querySelector('.q-multiple').checked = Boolean(question && question.multiple);
+    setQuestionImage(node, question && question.image ? question.image : null);
 
     var options = node.querySelector('.options');
     var optionList =
@@ -133,6 +226,7 @@
 
       questions.push({
         text: node.querySelector('.q-text').value.trim(),
+        image: node.querySelector('.q-image').value || null,
         multiple: node.querySelector('.q-multiple').checked,
         options: options,
       });
@@ -167,6 +261,12 @@
   }
 
   form.addEventListener('submit', function (event) {
+    if (pendingImages > 0) {
+      event.preventDefault();
+      window.alert('Подождите: картинка ещё обрабатывается.');
+      return;
+    }
+
     var questions = collect();
     var error = validate(questions);
 

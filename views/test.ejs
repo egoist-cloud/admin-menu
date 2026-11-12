@@ -2,6 +2,7 @@
 
 <div class="page-head">
   <div>
+    <span class="eyebrow">Онлайн-тест</span>
     <h1><%= test.title %></h1>
     <% if (test.description) { %>
       <p class="muted"><%= test.description %></p>
@@ -44,6 +45,11 @@
         <span class="question-number"><%= index + 1 %></span>
         <span><%= question.text %></span>
       </legend>
+
+      <% if (question.imageData) { %>
+        <img class="question-image" src="<%= question.imageData %>" alt="Иллюстрация к вопросу <%= index + 1 %>">
+      <% } %>
+
       <p class="muted small">
         <%= question.multiple ? 'Можно выбрать несколько ответов' : 'Выберите один ответ' %>
       </p>

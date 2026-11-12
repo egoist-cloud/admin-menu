@@ -56,6 +56,20 @@
         </label>
         <button type="button" class="btn btn-ghost btn-sm q-remove">Удалить</button>
       </div>
+
+      <div class="q-image-field">
+        <input type="hidden" class="q-image">
+        <label class="btn btn-ghost btn-sm q-image-pick">
+          + Картинка к вопросу
+          <input type="file" class="q-image-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+        </label>
+        <span class="muted small q-image-hint">PNG, JPG, WebP или GIF — сожмётся автоматически</span>
+        <div class="q-image-preview-wrap" hidden>
+          <img class="q-image-preview" alt="Превью картинки к вопросу">
+          <button type="button" class="btn btn-danger btn-sm q-image-remove">Убрать</button>
+        </div>
+      </div>
+
       <div class="options"></div>
       <button type="button" class="btn btn-ghost btn-sm opt-add">+ Вариант ответа</button>
     </section>

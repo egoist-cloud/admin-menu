@@ -1,9 +1,39 @@
 <%- include('partials/header') %>
 
+<%
+  const totalQuestions = tests.reduce((sum, test) => sum + test._count.questions, 0);
+  const totalSubmissions = tests.reduce((sum, test) => sum + test._count.submissions, 0);
+%>
+
 <section class="hero">
-  <h1>Онлайн-тесты</h1>
-  <p class="muted">Выберите тест, введите имя и ответьте на вопросы. Результат сразу увидит администратор.</p>
+  <div class="hero-copy">
+    <span class="eyebrow">Онлайн-тесты</span>
+    <h1>Проверь <em>себя</em></h1>
+    <p>Выберите тест, введите имя и ответьте на вопросы. Результат сразу увидит администратор.</p>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <strong><%= tests.length %></strong>
+      <span><%= plural(tests.length, ['тест', 'теста', 'тестов']) %></span>
+    </div>
+    <div class="hero-stat">
+      <strong><%= totalQuestions %></strong>
+      <span><%= plural(totalQuestions, ['вопрос', 'вопроса', 'вопросов']) %></span>
+    </div>
+    <div class="hero-stat">
+      <strong><%= totalSubmissions %></strong>
+      <span><%= plural(totalSubmissions, ['прохождение', 'прохождения', 'прохождений']) %></span>
+    </div>
+  </div>
 </section>
+
+<div class="section-head section-head-row">
+  <div>
+    <span class="eyebrow">Каталог</span>
+    <h2>Доступные тесты</h2>
+  </div>
+  <span class="muted small">Выберите тему и начните</span>
+</div>
 
 <% if (tests.length === 0) { %>
   <div class="card empty">
@@ -13,17 +43,21 @@
 <% } else { %>
   <div class="test-grid">
     <% tests.forEach((test) => { %>
-      <article class="card test-card">
-        <div class="test-card-head">
-          <h2><%= test.title %></h2>
-          <span class="badge badge-ok"><%= test._count.questions %> <%= plural(test._count.questions, ['вопрос', 'вопроса', 'вопросов']) %></span>
+      <article class="test-card">
+        <div class="test-card-cover">
+          <span class="test-card-badge">Тест</span>
+          <span class="test-card-watermark">?</span>
+          <span class="test-card-cover-meta">
+            <%= test._count.questions %> <%= plural(test._count.questions, ['вопрос', 'вопроса', 'вопросов']) %>
+          </span>
         </div>
-        <% if (test.description) { %>
-          <p class="muted"><%= test.description %></p>
-        <% } %>
-        <div class="test-card-foot">
-          <span class="muted small">Прохождений: <%= test._count.submissions %></span>
-          <a class="btn btn-primary" href="/tests/<%= test.id %>">Пройти тест</a>
+        <div class="test-card-body">
+          <h2><%= test.title %></h2>
+          <p><%= test.description || 'Проверьте свои знания и узнайте результат сразу после прохождения.' %></p>
+          <div class="test-card-foot">
+            <span class="muted small">Прохождений: <%= test._count.submissions %></span>
+            <a class="btn btn-primary btn-sm" href="/tests/<%= test.id %>">Пройти</a>
+          </div>
         </div>
       </article>
     <% }) %>
