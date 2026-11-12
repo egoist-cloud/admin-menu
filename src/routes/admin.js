@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const config = require('../config');
 const { prisma } = require('../prisma');
 const { asyncHandler } = require('../lib/async-handler');
+const { createPlayerHistoryHandler } = require('./player-history');
 const { formatDateTime, formatPercent } = require('../lib/format');
 const { parseTestForm } = require('../lib/test-payload');
 const { requireAdmin, verifyCredentials } = require('../middleware/auth');
@@ -379,49 +380,7 @@ router.post(
   }),
 );
 
-router.get(
-  '/players/history',
-  asyncHandler(async (req, res) => {
-    const name = String(req.query.name || '')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 80);
-
-    if (!name) return res.status(400).json({ error: 'Не указано имя игрока.' });
-
-    const submissions = await prisma.submission.findMany({
-      where: { participantName: { equals: name, mode: 'insensitive' } },
-      orderBy: { createdAt: 'desc' },
-      include: { test: { select: { title: true } } },
-    });
-
-    if (submissions.length === 0) return res.status(404).json({ error: 'История не найдена.' });
-
-    const percentages = submissions.map((submission) =>
-      submission.totalQuestions > 0 ? Math.round((submission.score / submission.totalQuestions) * 100) : 0,
-    );
-
-    res.setHeader('Cache-Control', 'private, no-store');
-    return res.json({
-      name: submissions[0].participantName,
-      total: submissions.length,
-      average: Math.round(percentages.reduce((sum, value) => sum + value, 0) / percentages.length),
-      best: percentages.reduce((max, value) => Math.max(max, value), 0),
-      lastAt: formatDateTime(submissions[0].createdAt),
-      submissions: submissions.map((submission) => ({
-        id: submission.id,
-        testTitle: submission.test.title,
-        score: submission.score,
-        totalQuestions: submission.totalQuestions,
-        percent:
-          submission.totalQuestions > 0
-            ? Math.round((submission.score / submission.totalQuestions) * 100)
-            : 0,
-        date: formatDateTime(submission.createdAt),
-      })),
-    });
-  }),
-);
+router.get('/players/history', asyncHandler(createPlayerHistoryHandler(prisma)));
 
 router.get(
   '/results',
